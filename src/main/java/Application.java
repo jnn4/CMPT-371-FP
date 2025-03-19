@@ -1,13 +1,12 @@
-package CMPT371Project.demo;
+package main.backend.springboot.src.main.java;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
-@SpringBootApplication
-public class Cmpt371ProjectApplication {
+public class Application {
 
 	public static void main(String[] args) {
-		SpringApplication.run(Cmpt371ProjectApplication.class, args);
+		SpringApplication.run(CMPT371Project.demo.Application.class, args);
 	}
 
 }

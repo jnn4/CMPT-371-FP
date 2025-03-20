@@ -1,42 +1,36 @@
 package main.java.server;
 
-import java.io.IOException;
-import java.net.ServerSocket;
-import java.net.Socket;
-import java.util.ArrayList;
-import java.util.List;
+import java.io.*;
+import java.net.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class GameServer {
     private static final int PORT = 12345;
-    private static final int MAX_PLAYERS = 3;
-    private List<PlayerHandler> players = new ArrayList<>();
+    private static ConcurrentHashMap<String, PlayerHandler> players = new ConcurrentHashMap<>();
 
     public static void main(String[] args) {
-        new GameServer().startServer();
-    }
-
-    public void StartServer() {
-        System.out.println("Game server started on PORT: " + PORT);
+        System.out.println("Game Server Running" + PORT);
         try (ServerSocket serverSocket = new ServerSocket(PORT)) {
-            while(players.size() < MAX_PLAYERS) {
-                Socket playerSocket = serverSocket.accept();
-                System.out.println("Player connected: " + playerSocket.getInetAddress());
-                if (players.size() >= MAX_PLAYERS) {
-                    System.out.println("Requested game is full! Closing connection...");
-                    playerSocket.close();
-                } else {
-                    PlayerHandler playerHandler = new PlayerHandler(playerSocket, this);
-                    players.add(playerHandler);
-                    new Thread(playerHandler).start();
-                }
+            while(true) {
+                Socket clientSocket = serverSocket.accept();
+                PlayerHandler player = new PlayerHandler(clientSocket);
+                new Thread(player).start();
             }
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
-    public synchronized void broadcastMessage(String message) {
-        for (PlayerHandler player : players) {
+    public static void addPlayer(String id, PlayerHandler player) {
+        players.put(id, player);
+    }
+
+    public static void removePlayer(String id) {
+        players.remove(id);
+    }
+
+    public static void broadcastMessage(String message) {
+        for (PlayerHandler player : players.values()) {
             player.sendMessage(message);
         }
     }

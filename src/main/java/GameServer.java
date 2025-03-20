@@ -34,4 +34,10 @@ public class GameServer {
             e.printStackTrace();
         }
     }
+
+    public synchronized void broadcastMessage(String message) {
+        for (PlayerHandler player : players) {
+            player.sendMessage(message);
+        }
+    }
 }

@@ -1,4 +1,4 @@
-package model;
+package main.java.model;
 
 import java.util.Vector;
 import java.util.concurrent.locks.ReentrantLock;

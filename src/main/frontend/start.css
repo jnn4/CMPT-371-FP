@@ -1,0 +1,8 @@
+body {
+    background-color: azure;
+    text-align: center;
+}
+
+button, input {
+    padding: 10px;
+}

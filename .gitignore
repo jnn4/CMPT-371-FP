@@ -1,0 +1,6 @@
+src/main/bridge/node_modules
+src/main/bridge/package.json
+src/main/bridge/package-lock.json
+src/main/server/GameServer.class
+src/main/server/PlayerHandler.class
+out/production

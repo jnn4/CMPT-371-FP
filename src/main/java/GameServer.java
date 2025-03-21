@@ -12,11 +12,12 @@ public class GameServer {
     private List<PlayerHandler> players = new ArrayList<>();
 
     public static void main(String[] args) {
-        new GameServer().startServer();
+        new GameServer().StartServer();
     }
 
     public void StartServer() {
         System.out.println("Game server started on PORT: " + PORT);
+        // When start server, create new listening socket
         try (ServerSocket serverSocket = new ServerSocket(PORT)) {
             while(players.size() < MAX_PLAYERS) {
                 Socket playerSocket = serverSocket.accept();
@@ -25,6 +26,7 @@ public class GameServer {
                     System.out.println("Requested game is full! Closing connection...");
                     playerSocket.close();
                 } else {
+                    // Create new player handler, add to list and start new thread
                     PlayerHandler playerHandler = new PlayerHandler(playerSocket, this);
                     players.add(playerHandler);
                     new Thread(playerHandler).start();
@@ -35,6 +37,7 @@ public class GameServer {
         }
     }
 
+    // we have chats now?
     public synchronized void broadcastMessage(String message) {
         for (PlayerHandler player : players) {
             player.sendMessage(message);

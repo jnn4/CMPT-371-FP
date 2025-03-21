@@ -18,7 +18,7 @@ public class PlayerHandler implements Runnable{
         try(BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()))){
             out = new PrintWriter(socket.getOutputStream(), true);
             sendMessage("Welcome to [our amazing game name]!");
-
+            // receive messages from player and broadcast to lobby
             String message;
             while ((message = in.readLine()) != null) {
                 System.out.println("Player says: " + message);

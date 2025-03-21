@@ -17,6 +17,7 @@ public class Square {
     }
 
     public synchronized boolean tryLock() {
+        // if no other thread is holding the lock, acquire it
         if(lock.tryLock()) {
             isLocked = true;
             return true;

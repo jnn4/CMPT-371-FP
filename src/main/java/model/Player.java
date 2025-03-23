@@ -28,17 +28,23 @@ public class Player {
         return color;
     }
 
-    public boolean move(int newX, int newY, Maze maze) {
-        Square current = maze.getSquare(x, y);
-        Square next = maze.getSquare(newX, newY);
+    public boolean move(int newX, int newY, Grid grid) {
+        Square next = grid.getSquare(newX, newY);
 
         if(next.canEnter(this)) {
-            current.unlock();
             next.tryLock(this);
             x = newX;
             y = newY;
             return true;
         }
         return false;
+    }
+
+    public void setX(int newX) {
+        this.x = newX;
+    }
+
+    public void setY(int newY) {
+        this.y = newY;
     }
 }

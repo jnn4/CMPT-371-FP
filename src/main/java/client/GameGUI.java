@@ -8,7 +8,7 @@ public class GameGUI extends JFrame {
     private static final int GRID_SIZE = 10;
     private JLabel[][] grid;
     private int playerX = 0, playerY = 0; // Initial position
-    private GameClient client;
+    private final GameClient client;
 
     public GameGUI(GameClient client) {
         this.client = client;
@@ -65,8 +65,9 @@ public class GameGUI extends JFrame {
                 String playerId = parts[1];
                 int x = Integer.parseInt(parts[2]);
                 int y = Integer.parseInt(parts[3]);
+                String color = parts[4];
 
-                grid[x][y].setBackground(Color.RED);
+                grid[x][y].setBackground(Color.decode(color));
             }
         });
     }
@@ -74,5 +75,9 @@ public class GameGUI extends JFrame {
     private void updatePlayerPosition() {
         grid[playerX][playerY].setText("P");
         grid[playerX][playerY].setBackground(Color.GREEN);
+    }
+
+    public GameClient getClient() {
+        return client;
     }
 }

@@ -1,13 +1,12 @@
 package main.java.model;
 
 import java.util.Vector;
-import java.util.concurrent.locks.ReentrantLock;
 
-public class Maze {
+public class Grid {
     private final int size;
     private Vector<Vector<Square>> grid;
 
-    public Maze(int size) {
+    public Grid(int size) {
         this.size = size;
         grid = new Vector<>(size);
         for(int i = 0; i < size; i++) {

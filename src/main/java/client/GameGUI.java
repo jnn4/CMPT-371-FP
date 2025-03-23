@@ -33,11 +33,12 @@ public class GameGUI extends JFrame {
             public void keyPressed(KeyEvent e) {
                 int newX = playerX, newY = playerY;
                 switch (e.getKeyCode()) {
-                    case KeyEvent.VK_UP: newY--; break;
-                    case KeyEvent.VK_DOWN: newY++; break;
-                    case KeyEvent.VK_LEFT: newX--; break;
-                    case KeyEvent.VK_RIGHT: newX++; break;
+                    case KeyEvent.VK_UP: newY--; break;    // Move up (decrease Y)
+                    case KeyEvent.VK_DOWN: newY++; break;  // Move down (increase Y)
+                    case KeyEvent.VK_LEFT: newX--; break;  // Move left (decrease X)
+                    case KeyEvent.VK_RIGHT: newX++; break; // Move right (increase X)
                 }
+
                 if (isValidMove(newX, newY)) {
                     playerX = newX;
                     playerY = newY;
@@ -72,5 +73,6 @@ public class GameGUI extends JFrame {
 
     private void updatePlayerPosition() {
         grid[playerX][playerY].setText("P");
+        grid[playerX][playerY].setBackground(Color.GREEN);
     }
 }

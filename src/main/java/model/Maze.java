@@ -4,7 +4,7 @@ import java.util.Vector;
 import java.util.concurrent.locks.ReentrantLock;
 
 public class Maze {
-    private int size;
+    private final int size;
     private Vector<Vector<Square>> grid;
 
     public Maze(int size) {
@@ -22,5 +22,9 @@ public class Maze {
 
     public Square getSquare(int x, int y) {
         return grid.get(x).get(y);
+    }
+
+    public int getSize() {
+        return size;
     }
 }

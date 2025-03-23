@@ -34,7 +34,7 @@ public class Player {
 
         if(next.canEnter(this)) {
             current.unlock();
-            next.lock(this);
+            next.tryLock(this);
             x = newX;
             y = newY;
             return true;

@@ -1,16 +1,19 @@
 package main.java.server;
 import main.java.model.Maze;
 import main.java.model.Player;
+import main.java.model.Square;
 
 import java.io.*;
 import java.net.*;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class GameServer {
     private static final int PORT = 12345;
-    private static Maze maze = new Maze(10);
-    private static Set<ClientHandler> clients = new HashSet<>();
-    private static Map<String, Player> players = new HashMap<>();
+    private static final Maze maze = new Maze(10);
+    private static final Set<ClientHandler> clients = new HashSet<>();
+    private static final Map<String, Player> players = new HashMap<>();
+    private static final AtomicInteger playerCounter = new AtomicInteger(1); // Ensures unique IDs
 
     public static void main(String[] args) {
         try (ServerSocket serverSocket = new ServerSocket(PORT)) {
@@ -19,7 +22,11 @@ public class GameServer {
             while (true) {
                 Socket clientSocket = serverSocket.accept();
                 ClientHandler clientHandler = new ClientHandler(clientSocket);
-                clients.add(clientHandler);
+
+                synchronized (clients) {
+                    clients.add(clientHandler);
+                }
+
                 new Thread(clientHandler).start();
             }
         } catch (IOException e) {
@@ -27,22 +34,23 @@ public class GameServer {
         }
     }
 
-    // **Broadcast messages to all clients**
     public static synchronized void broadcast(String message) {
-        for (ClientHandler client : clients) {
-            client.sendMessage(message);
+        synchronized (clients) {
+            for (ClientHandler client : clients) {
+                client.sendMessage(message);
+            }
         }
     }
 
-    // **Remove disconnected clients**
     public static synchronized void removeClient(ClientHandler client) {
-        clients.remove(client);
+        synchronized (clients) {
+            clients.remove(client);
+        }
     }
 
     private static class ClientHandler implements Runnable {
-        private Socket socket;
+        private final Socket socket;
         private PrintWriter out;
-        private BufferedReader in;
         private Player player;
 
         public ClientHandler(Socket socket) {
@@ -56,15 +64,18 @@ public class GameServer {
         @Override
         public void run() {
             try {
-                in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+                BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
                 out = new PrintWriter(socket.getOutputStream(), true);
 
-                // assign unique player ID and start position
-                String playerId = "P" + (players.size() + 1);
+                // Assign unique player ID
+                String playerId = "P" + playerCounter.getAndIncrement();
                 player = new Player(playerId, 0, 0, "RED");
-                players.put(playerId, player);
 
-                maze.getSquare(0, 0).lock(player);
+                synchronized (players) {
+                    players.put(playerId, player);
+                }
+
+                maze.getSquare(0, 0).tryLock(player);
                 broadcast("PLAYER_JOINED " + playerId + " 0 0");
 
                 String message;
@@ -72,28 +83,50 @@ public class GameServer {
                     handleClientMessage(message);
                 }
             } catch (IOException e) {
-                System.out.println("Client disconnected");
+                System.out.println("Client disconnected: " + player.getId());
             } finally {
-                removeClient(this);
-                if (player != null) {
-                    maze.getSquare(player.getX(), player.getY()).unlock();
-                    players.remove(player.getId());
-                    broadcast("PLAYER_LEFT " + player.getId());
-                }
+                cleanup();
             }
         }
 
         private void handleClientMessage(String message) {
             String[] parts = message.split(" ");
-            if(parts[0].equals("MOVE")) {
+            if (parts[0].equals("MOVE")) {
                 int newX = Integer.parseInt(parts[1]);
                 int newY = Integer.parseInt(parts[2]);
 
+                Square square = maze.getSquare(newX, newY);
+
+                if(square.tryLock(player)) {
+                    player.setX(newX);
+                    player.setY(newY);
+                }
+
                 if (player.move(newX, newY, maze)) {
-                    broadcast("PLAYER_MOVED " + newX + " " + newY);
+                    broadcast("PLAYER_MOVED " + player.getId() + " " + newX + " " + newY);
                 } else {
                     sendMessage("INVALID MOVE");
                 }
+            }
+        }
+
+        private void cleanup() {
+            try {
+                if (player != null) {
+                    maze.getSquare(player.getX(), player.getY()).unlock();
+                    synchronized (players) {
+                        players.remove(player.getId());
+                    }
+                    broadcast("PLAYER_LEFT " + player.getId());
+                }
+
+                synchronized (clients) {
+                    clients.remove(this);
+                }
+
+                socket.close();
+            } catch (IOException e) {
+                e.printStackTrace();
             }
         }
     }

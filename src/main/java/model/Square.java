@@ -1,34 +1,42 @@
 package main.java.model;
 
-import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
 public class Square {
-    private boolean isLocked;
-    private final Lock lock;
+   private final ReentrantLock lock = new ReentrantLock();
+   private Player owner = null;
 
-    public Square() {
-        this.isLocked = false;
-        this.lock = new ReentrantLock();
-    }
-
+   // check if square is locked
     public boolean isLocked() {
-        return isLocked;
+        return lock.isLocked();
     }
 
-    public synchronized boolean tryLock() {
+    // get player who owns the square (the one who locked it)
+    public Player getOwner() {
+        return owner;
+    }
+
+    // check if square can be entered by the player
+    public boolean canEnter(Player player) {
+        // if locked, only owner can enter
+        return !lock.isLocked() || owner == player;
+    }
+
+    // try to lock square for a player
+    public boolean tryLock(Player player) {
         if(lock.tryLock()) {
-            isLocked = true;
+            owner = player;
             return true;
         }
         return false;
     }
 
-    // should not use for shared squares??
+    // do not use
     public void unlock() {
-        if(isLocked) {
-            isLocked = false;
+        if(lock.isHeldByCurrentThread()) {
+            owner = null;
             lock.unlock();
         }
     }
+
 }

@@ -74,7 +74,7 @@
    ```sh
    java GameClient.java 
    // run multiple instances of this command to act as other players
-   ```  
+   
 4. Start playing!
 
 

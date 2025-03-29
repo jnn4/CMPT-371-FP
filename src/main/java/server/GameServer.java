@@ -119,24 +119,93 @@ public class GameServer {
             }
         }
 
+        // Broadcast lobby's readiness (so client's UI can update accordingly)
+        private static void broadcastLobbyState() {
+            synchronized (players) {
+                String lobbyState = ("LOBBY_STATE:");
+                for (Player player : players.values()) {
+                    lobbyState += player.getId() + "," + (player.getReady() ? "READY" : "NOT_READY") + ";";
+                }
+                broadcast(lobbyState);
+            }
+        }
+
+        // Check if all players are ready
+        private static boolean allPlayersReady() {
+            synchronized (players) {
+                for (Player player : players.values()) {
+                    if (!player.getReady()) {
+                        return false;
+                    }
+                }
+            }
+            return true;
+        }
+
+        // If all is ready, start countdown (can be cancelled if someone unready)
+        private static void startGameCountdown() {
+            broadcast("GAME_STARTING");
+    
+            for (int i = 3; i > 0; i--) {
+                synchronized (players) {
+                    if (!allPlayersReady()) {
+                        broadcast("COUNTDOWN_ABORTED");
+                        broadcastLobbyState();
+                        return;
+                    }
+                }
+    
+                broadcast("COUNTDOWN" + i);
+                try {
+                    Thread.sleep(1000);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+    
+            broadcast("GAME_STARTED"); // Notify clients to transition to the game
+            // todo: Logic for transitioning into the actual game
+        }
+
+        // Handle messages from the clients
         private void handleClientMessage(String message) {
             String[] parts = message.split(" ");
-            if (parts[0].equals("MOVE")) {
-                int newX = Integer.parseInt(parts[1]);
-                int newY = Integer.parseInt(parts[2]);
+            switch (parts[0]) {
+                case "MOVE":
+                    int newX = Integer.parseInt(parts[1]);
+                    int newY = Integer.parseInt(parts[2]);
 
-                Square square = grid.getSquare(newX, newY);
+                    Square square = grid.getSquare(newX, newY);
 
-                if(square.tryLock(player)) {
-                    player.setX(newX);
-                    player.setY(newY);
-                }
+                    if(square.tryLock(player)) {
+                        player.setX(newX);
+                        player.setY(newY);
+                    }
 
-                if (player.move(newX, newY, grid)) {
-                    broadcast("PLAYER_MOVED " + player.getId() + " " + newX + " " + newY);
-                } else {
-                    sendMessage("INVALID MOVE");
-                }
+                    if (player.move(newX, newY, grid)) {
+                        broadcast("PLAYER_MOVED " + player.getId() + " " + newX + " " + newY);
+                    } else {
+                        sendMessage("INVALID MOVE");
+                    }
+                    break;
+                    
+                case "READY":
+                    player.toggleReady();
+                    broadcastLobbyState();
+
+                    if (allPlayersReady()) {
+                        startGameCountdown();
+                    }
+                    break;
+
+                case "UNREADY":
+                    player.toggleReady();
+                    broadcastLobbyState();
+                    break;
+
+                default:
+                    sendMessage("UNKNOWN COMMAND");
+                    break;
             }
         }
 

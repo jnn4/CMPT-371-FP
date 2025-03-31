@@ -29,8 +29,13 @@ public class GameServer {
 
                 new Thread(clientHandler).start();
             }
+        } catch (BindException e) {
+            System.err.println("Error: Port " + PORT + " is already in use. Please use a different port.");
+            System.exit(1);
         } catch (IOException e) {
+            System.err.println("Error: An unexpected I/O error occurred.");
             e.printStackTrace();
+            System.exit(1);
         }
     }
 
@@ -105,12 +110,10 @@ public class GameServer {
 
                 synchronized (players) {
                     players.put(playerId, player);
-                    broadcastLobbyState();
                 }
 
                 grid.getSquare(startX, startY).tryLock(player);
                 broadcast("PLAYER_JOINED " + playerId + " 0 0");
-                broadcastLobbyState();
 
                 String message;
                 while ((message = in.readLine()) != null) {

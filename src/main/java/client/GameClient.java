@@ -19,8 +19,14 @@ public class GameClient {
             // Start a listener thread for server messages
             new Thread(this::listenForMessages).start();
 
+        } catch (ConnectException e) {
+            System.err.println("ERROR: Unable to connect to the server at " + serverAddress + ":" + port);
+            System.err.println("Please make sure the server is running and try again.");
+            System.exit(1);
         } catch (IOException e) {
+            System.err.println("ERROR: I/O exception occurred while connecting to the server.");
             e.printStackTrace();
+            System.exit(1);
         }
     }
 
@@ -92,8 +98,13 @@ public class GameClient {
                     gui.updateMaze(message);
                 }
             }
+        } catch (SocketException e) {
+            System.err.println("ERROR: Connection to the server was lost.");
+            System.exit(1);
         } catch (IOException e) {
+            System.err.println("ERROR: I/O exception occurred while reading from the server.");
             e.printStackTrace();
+            System.exit(1);
         }
     }
 

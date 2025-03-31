@@ -24,7 +24,6 @@ public class GameClient {
         }
     }
 
-
     public static void main(String[] args) {
         GameClient client = new GameClient("localhost", 12345);
         GameGUI gui = new GameGUI(client);
@@ -50,13 +49,42 @@ public class GameClient {
                 System.out.println("Server: " + message);
 
                 // set player ID when server assigns it
-                if(message.startsWith("ASSIGN_PLAYER,")) {
+                if (message.startsWith("ASSIGN_PLAYER,")) {
                     playerId = message.split(",")[1];
                     System.out.println("Player: " + playerId);
                 }
 
+                // Lobby state update (send post-fix of string only)
+                else if (message.startsWith("LOBBY_STATE: ")) {
+                    if (gui != null) {
+                        gui.updateLobby(message.substring("LOBBY_STATE: ".length()));
+                    }
+                }
+
+                // Countdown update
+                else if (message.startsWith("COUNTDOWN ")) {
+                    int seconds = Integer.parseInt(message.split(" ")[1]);
+                    if (gui != null) {
+                        gui.updateCountdown(seconds);
+                    }
+                }
+
+                // Countdown abort
+                else if (message.equals("COUNTDOWN_ABORTED")) {
+                    if (gui != null) {
+                        gui.abortCountdown();
+                    }
+                }
+
+                // Game start
+                else if (message.equals("GAME_STARTED")) {
+                    if (gui != null) {
+                        gui.startGame();
+                    }
+                }
+
                 // update GUI when player moves
-                if(gui != null) {
+                if (gui != null) {
                     gui.updateMaze(message);
                 }
             }

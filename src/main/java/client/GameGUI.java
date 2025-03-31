@@ -9,6 +9,13 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class GameGUI extends JFrame {
+    // Lobby UI
+    private JPanel lobbyPanel;
+    private JLabel countdownLabel;
+    private DefaultListModel<String> playerListModel;
+    private JList<String> playerList;
+
+    // Game UI
     private static final int GRID_SIZE = 10;
     private JLabel[][] grid;
     private Player localPlayer;
@@ -16,6 +23,7 @@ public class GameGUI extends JFrame {
     private final Map<String, Player> players = new HashMap<>();
     private final Map<String, Color> trailColors = new HashMap<>();
 
+    // Constructor
     public GameGUI(GameClient client) {
         this.client = client;
         setTitle("Multiplayer Maze Game");
@@ -23,16 +31,19 @@ public class GameGUI extends JFrame {
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLayout(new GridLayout(GRID_SIZE, GRID_SIZE));
 
-        grid = new JLabel[GRID_SIZE][GRID_SIZE];
-        for (int row = 0; row < GRID_SIZE; row++) {
-            for (int col = 0; col < GRID_SIZE; col++) {
-                grid[row][col] = new JLabel(" ", SwingConstants.CENTER);
-                grid[row][col].setBorder(BorderFactory.createLineBorder(Color.BLACK));
-                grid[row][col].setOpaque(true);
-                add(grid[row][col]);
-            }
-        }
+        // Lobby setup
+        lobbyPanel = new JPanel(new BorderLayout());
+        countdownLabel = new JLabel("Waiting for players...", SwingConstants.CENTER);
+        playerListModel = new DefaultListModel<>();
+        playerList = new JList<>(playerListModel);
 
+        lobbyPanel.add(countdownLabel, BorderLayout.NORTH);
+        lobbyPanel.add(new JScrollPane(playerList), BorderLayout.CENTER);
+
+        getContentPane().add(lobbyPanel);
+        lobbyPanel.setVisible(true);
+
+        // Game setup
         // Create local player
         this.localPlayer = new Player("you", 0, 0, "#00FF00");
         players.put(localPlayer.getId(), localPlayer);
@@ -45,6 +56,50 @@ public class GameGUI extends JFrame {
         setFocusable(true);
         setVisible(true);
         requestFocusInWindow();
+    }
+
+    // Lobby methods
+    public void updateLobby(String lobbyState) {
+        SwingUtilities.invokeLater(() -> {
+            playerListModel.clear();
+            String[] players = lobbyState.split(";");
+            for (String playerInfo : players) {
+                if (!playerInfo.isEmpty() && playerInfo.contains(",")) {
+                    String[] parts = playerInfo.split(",");
+                    String playerId = parts[0];
+                    String readiness = parts[1];
+                    playerListModel.addElement(playerId + " - " + readiness);
+                }
+            }
+        });
+    }
+
+    public void updateCountdown(int seconds) {
+        SwingUtilities.invokeLater (() -> {
+            countdownLabel.setText("Game starting in " + seconds);
+        });
+    }
+
+    public void abortCountdown() {
+        SwingUtilities.invokeLater(() -> {
+            countdownLabel.setText("Countdown aborted. Waiting for all players to be ready.");
+        });
+    }
+
+    public void startGame() {
+        getContentPane().removeAll();
+        setLayout(new GridLayout(GRID_SIZE, GRID_SIZE));
+        grid = new JLabel[GRID_SIZE][GRID_SIZE];
+        for (int row = 0; row < GRID_SIZE; row++) {
+            for (int col = 0; col < GRID_SIZE; col++) {
+                grid[row][col] = new JLabel(" ", SwingConstants.CENTER);
+                grid[row][col].setBorder(BorderFactory.createLineBorder(Color.BLACK));
+                grid[row][col].setOpaque(true);
+                add(grid[row][col]);
+            }
+        }
+        revalidate();
+        repaint();
     }
 
     private void setupKeyBindings() {
@@ -97,15 +152,19 @@ public class GameGUI extends JFrame {
     }
 
     private void updateTrail(int x, int y, String playerId) {
-        grid[y][x].setText(""); // <- FIXED
-        grid[y][x].setBackground(trailColors.get(playerId)); // <- FIXED
+        if (grid != null) {
+            grid[y][x].setText(""); // <- FIXED
+            grid[y][x].setBackground(trailColors.get(playerId)); // <- FIXED
+        }
     }
 
     private void updatePlayerPosition(Player player) {
-        int x = player.getX();
-        int y = player.getY();
-        grid[y][x].setText("P"); // <- FIXED
-        grid[y][x].setBackground(Color.decode(player.getColor())); // <- FIXED
+        if (grid != null) {
+            int x = player.getX();
+            int y = player.getY();
+            grid[y][x].setText("P"); // <- FIXED
+            grid[y][x].setBackground(Color.decode(player.getColor())); // <- FIXED
+        }
     }
 
     private boolean isValidMove(int x, int y) {

@@ -46,6 +46,8 @@ public class GameServer {
         synchronized (clients) {
             clients.remove(client);
         }
+        playerCounter.decrementAndGet(); // Decrement counter when a player disconnects
+        ClientHandler.broadcastLobbyState();
     }
 
     private static class ClientHandler implements Runnable {
@@ -103,10 +105,12 @@ public class GameServer {
 
                 synchronized (players) {
                     players.put(playerId, player);
+                    broadcastLobbyState();
                 }
 
                 grid.getSquare(startX, startY).tryLock(player);
                 broadcast("PLAYER_JOINED " + playerId + " 0 0");
+                broadcastLobbyState();
 
                 String message;
                 while ((message = in.readLine()) != null) {
@@ -119,10 +123,10 @@ public class GameServer {
             }
         }
 
-        // Broadcast lobby's readiness (so client's UI can update accordingly)
+        // Broadcast lobby's players and their readiness (so client's UI can update accordingly)
         private static void broadcastLobbyState() {
             synchronized (players) {
-                String lobbyState = ("LOBBY_STATE:");
+                String lobbyState = ("LOBBY_STATE: ");
                 for (Player player : players.values()) {
                     lobbyState += player.getId() + "," + (player.getReady() ? "READY" : "NOT_READY") + ";";
                 }
@@ -245,6 +249,7 @@ public class GameServer {
                     grid.getSquare(player.getX(), player.getY()).unlock();
                     synchronized (players) {
                         players.remove(player.getId());
+                        broadcastLobbyState();
                     }
                     broadcast("PLAYER_LEFT " + player.getId());
                 }

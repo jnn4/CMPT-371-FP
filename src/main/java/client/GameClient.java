@@ -28,6 +28,7 @@ public class GameClient {
         GameClient client = new GameClient("localhost", 12345);
         GameGUI gui = new GameGUI(client);
         client.setGUI(gui);
+        client.sendMessage("INIT_STATE");
     }
 
 
@@ -35,6 +36,9 @@ public class GameClient {
         this.gui = gui;  // Connect GUI with Client
     }
 
+    public void sendMessage(String message) {
+        out.println(message);
+    }
 
     public void sendMove(int newX, int newY) {
         if (playerId != null) {

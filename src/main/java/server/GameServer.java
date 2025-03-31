@@ -192,7 +192,11 @@ public class GameServer {
                         sendMessage("INVALID MOVE");
                     }
                     break;
-                    
+                
+                case "INIT_STATE":
+                    broadcastLobbyState();
+                    break;
+
                 case "READY":
                     player.toggleReady();
                     broadcastLobbyState();

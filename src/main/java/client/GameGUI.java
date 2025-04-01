@@ -14,6 +14,7 @@ public class GameGUI extends JFrame {
     private JLabel countdownLabel;
     private DefaultListModel<String> playerListModel;
     private JList<String> playerList;
+    private JButton readyButton;
 
     // Game UI
     private static final int GRID_SIZE = 10;
@@ -32,15 +33,9 @@ public class GameGUI extends JFrame {
         setLayout(new GridLayout(GRID_SIZE, GRID_SIZE));
 
         // Lobby setup
-        lobbyPanel = new JPanel(new BorderLayout());
-        countdownLabel = new JLabel("Waiting for players...", SwingConstants.CENTER);
-        playerListModel = new DefaultListModel<>();
-        playerList = new JList<>(playerListModel);
-
-        lobbyPanel.add(countdownLabel, BorderLayout.NORTH);
-        lobbyPanel.add(new JScrollPane(playerList), BorderLayout.CENTER);
-
-        getContentPane().add(lobbyPanel);
+        setupLobbyPanel();
+        
+        getContentPane().add(lobbyPanel, BorderLayout.CENTER);
         lobbyPanel.setVisible(true);
 
         // Game setup
@@ -58,9 +53,48 @@ public class GameGUI extends JFrame {
         requestFocusInWindow();
     }
 
-    // Lobby methods
+    private void setupLobbyPanel() {
+        lobbyPanel = new JPanel(new BorderLayout());
+        lobbyPanel.setPreferredSize(new Dimension(400, 400));
+
+        // Countdown label at the top
+        countdownLabel = new JLabel("Waiting for players...", SwingConstants.CENTER);
+        lobbyPanel.add(countdownLabel, BorderLayout.PAGE_START);
+
+        // Player list in the center
+        playerListModel = new DefaultListModel<>();
+        playerList = new JList<>(playerListModel);
+        playerList.setVisibleRowCount(4);
+        playerList.setFixedCellHeight(20);
+        
+        JScrollPane playerListScrollPane = new JScrollPane(playerList);
+        playerListScrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
+
+        playerListScrollPane.setPreferredSize(new Dimension(200, 150));
+        lobbyPanel.add(playerListScrollPane, BorderLayout.CENTER);
+
+        // Ready button at the bottom
+        readyButton = new JButton("READY");
+        readyButton.addActionListener(_ -> toggleReadyState());
+        // JPanel buttonPanel = new JPanel(new BorderLayout());
+        // buttonPanel.add(readyButton, BorderLayout.CENTER);
+        lobbyPanel.add(readyButton, BorderLayout.PAGE_END);
+    }
+    
+    // ----- Lobby methods -----
+    private void toggleReadyState() {
+        if (readyButton.getText().equals("READY")) {
+            client.sendMessage("READY");
+            readyButton.setText("UNREADY");
+        } else {
+            client.sendMessage("UNREADY");
+            readyButton.setText("READY");
+        }
+    }
+
     public void updateLobby(String lobbyState) {
         SwingUtilities.invokeLater(() -> {
+            // Update player list
             playerListModel.clear();
             String[] players = lobbyState.split(";");
             for (String playerInfo : players) {
@@ -71,6 +105,8 @@ public class GameGUI extends JFrame {
                     playerListModel.addElement(playerId + " - " + readiness);
                 }
             }
+            lobbyPanel.revalidate();
+            lobbyPanel.repaint();
         });
     }
 
@@ -86,6 +122,7 @@ public class GameGUI extends JFrame {
         });
     }
 
+    // ----- Game methods -----
     public void startGame() {
         getContentPane().removeAll();
         setLayout(new GridLayout(GRID_SIZE, GRID_SIZE));
@@ -98,6 +135,12 @@ public class GameGUI extends JFrame {
                 add(grid[row][col]);
             }
         }
+
+        // Render original positions
+        for (Player player : players.values()) {
+            updatePlayerPosition(player);
+        }
+
         revalidate();
         repaint();
     }

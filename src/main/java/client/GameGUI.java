@@ -67,7 +67,7 @@ public class GameGUI extends JFrame {
             @Override
             public void keyPressed(KeyEvent e) {
                 lobbyPanel.setVisible(true); // Show lobby panel when any key is pressed
-                logoLabel.setVisible(false);
+                logoLabel.setVisible(false); // Hide logo when any key is pressed
             }
         });
 

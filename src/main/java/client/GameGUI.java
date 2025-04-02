@@ -13,14 +13,19 @@ import java.io.IOException;
 public class GameGUI extends JFrame {
     private static final int WINDOW_SIZE = 1000;
     private static final int GRID_SIZE = 10;
-    // Lobby UI
+    // Start Screen UI
     private JPanel backgroundPanel;
     private JLabel lobbyBackground;
     private JLabel logoLabel;
     private JLabel startPromptText;
-    private Font fontInkyThinPixels;
+    private Font fontInkyThinPixelsLarge;
+    private Font fontInkyThinPixelsBase;
     private JLayeredPane layeredPane;
-    private JPanel lobbyPanel;
+
+    // Lobby UI
+    private JLabel howToPlayLabel;
+    private JLayeredPane lobbyPanel;
+    private JLabel playersContainerLabel;
     private JLabel countdownLabel;
     private DefaultListModel<String> playerListModel;
     private JList<String> playerList;
@@ -63,13 +68,13 @@ public class GameGUI extends JFrame {
         // Press Any Key To Start Label
         try {
             // Load the Inky Thin Pixels font file from resources
-            fontInkyThinPixels = Font.createFont(Font.TRUETYPE_FONT, new File("../../resources/fonts/Inky Thin Pixels.ttf")).deriveFont(48f);
+            fontInkyThinPixelsLarge = Font.createFont(Font.TRUETYPE_FONT, new File("../../resources/fonts/Inky Thin Pixels.ttf")).deriveFont(48f);
             GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
-            ge.registerFont(fontInkyThinPixels);
+            ge.registerFont(fontInkyThinPixelsLarge);
 
             // Create JLabel with custom font
             startPromptText = new JLabel("> PRESS ANY KEY TO START");
-            startPromptText.setFont(fontInkyThinPixels);
+            startPromptText.setFont(fontInkyThinPixelsLarge);
             startPromptText.setForeground(new Color(41,50,65));
             startPromptText.setBounds(430, 530, 450, 55);
 
@@ -131,12 +136,63 @@ public class GameGUI extends JFrame {
     }
 
     private void setupLobbyPanel() {
-        lobbyPanel = new JPanel(new BorderLayout());
+        lobbyPanel = new JLayeredPane();
         lobbyPanel.setPreferredSize(new Dimension(WINDOW_SIZE, WINDOW_SIZE));
 
-        // Countdown label at the top
-        countdownLabel = new JLabel("Waiting for players...", SwingConstants.CENTER);
-        lobbyPanel.add(countdownLabel, BorderLayout.PAGE_START);
+        // How To Play Panel
+        howToPlayLabel = new JLabel(new ImageIcon("../../resources/images/how_to_play_text.png"));
+        howToPlayLabel.setBounds(200, 100, 604, 207);
+        lobbyPanel.add(howToPlayLabel, JLayeredPane.DEFAULT_LAYER); 
+
+        // How To Play Text
+        try {
+            // Load the Inky Thin Pixels font file from resources
+            fontInkyThinPixelsBase = Font.createFont(Font.TRUETYPE_FONT, new File("../../resources/fonts/Inky Thin Pixels.ttf")).deriveFont(36f);
+            GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
+            ge.registerFont(fontInkyThinPixelsLarge);
+
+            // Create JLabel with custom font
+            // Have to use <html> and <br> tags for newline support
+            JLabel instructions = new JLabel(
+                "<html>Capture tiles by stepping on them! Other players can't<br>" + 
+                "step on your territory so maneuver around them<br>" + 
+                "to capture the largest area you can. The player with the<br>" + 
+                "most territory at the end wins.</html>");
+            instructions.setFont(fontInkyThinPixelsBase);
+            instructions.setForeground(new Color(41,50,65));
+            instructions.setBounds(100, 265, 870, 170);
+
+            // Add the text label to the layered pane
+            lobbyPanel.add(instructions, JLayeredPane.PALETTE_LAYER);
+
+            // Countdown label at the top
+            countdownLabel = new JLabel("WAITING FOR PLAYERS...");
+            countdownLabel.setFont(fontInkyThinPixelsBase);
+            countdownLabel.setForeground(new Color(41,50,65));
+            countdownLabel.setBounds(530, 800, 370, 50);
+            lobbyPanel.add(countdownLabel, JLayeredPane.PALETTE_LAYER);
+
+        } catch (FontFormatException | IOException e) {
+            e.printStackTrace();
+        }
+
+        // Timer for blinking effect
+        Timer timer = new Timer(800, new ActionListener() {
+            private boolean isVisible = true; // Track visibility state
+        
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                isVisible = !isVisible; // Toggle visibility
+                countdownLabel.setVisible(isVisible);
+            }
+        });
+
+        timer.start();
+
+        // Container for players joined
+        playersContainerLabel = new JLabel(new ImageIcon("../../resources/images/players_container.png"));
+        playersContainerLabel.setBounds(500, 512, 382, 355);
+        lobbyPanel.add(playersContainerLabel, JLayeredPane.DEFAULT_LAYER);
 
         // Player list in the center
         playerListModel = new DefaultListModel<>();
@@ -145,17 +201,18 @@ public class GameGUI extends JFrame {
         playerList.setFixedCellHeight(20);
 
         JScrollPane playerListScrollPane = new JScrollPane(playerList);
-        playerListScrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
 
         playerListScrollPane.setPreferredSize(new Dimension(200, 150));
-        lobbyPanel.add(playerListScrollPane, BorderLayout.CENTER);
+        playerListScrollPane.setBounds(550, 600, 300, 100);
+        lobbyPanel.add(playerListScrollPane, JLayeredPane.PALETTE_LAYER);
 
         // Ready button at the bottom
         readyButton = new JButton("READY");
         readyButton.addActionListener(_ -> toggleReadyState());
+        readyButton.setBounds(550, 700, 300, 50);
         // JPanel buttonPanel = new JPanel(new BorderLayout());
         // buttonPanel.add(readyButton, BorderLayout.CENTER);
-        lobbyPanel.add(readyButton, BorderLayout.PAGE_END);
+        lobbyPanel.add(readyButton, JLayeredPane.PALETTE_LAYER);
     }
 
     // ----- Lobby methods -----

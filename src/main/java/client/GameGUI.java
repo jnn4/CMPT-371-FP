@@ -13,6 +13,7 @@ public class GameGUI extends JFrame {
     private static final int GRID_SIZE = 10;
     // Lobby UI
     private JPanel lobbyPanel;
+    private JLabel lobbyBackground;
     private JLabel countdownLabel;
     private DefaultListModel<String> playerListModel;
     private JList<String> playerList;
@@ -32,6 +33,10 @@ public class GameGUI extends JFrame {
         setSize(WINDOW_SIZE, WINDOW_SIZE);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLayout(new GridLayout(GRID_SIZE, GRID_SIZE));
+
+        // Lobby Background
+        lobbyBackground = new JLabel(new ImageIcon("../../resources/images/lobby_background.png"));
+        setContentPane(lobbyBackground);
 
         // Lobby setup
         setupLobbyPanel();

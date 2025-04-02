@@ -12,9 +12,10 @@ public class GameGUI extends JFrame {
     private static final int WINDOW_SIZE = 1000;
     private static final int GRID_SIZE = 10;
     // Lobby UI
-    private JPanel lobbyPanel;
+    private JPanel backgroundPanel;
     private JLabel lobbyBackground;
     private JLayeredPane layeredPane;
+    private JPanel lobbyPanel;
     private JLabel countdownLabel;
     private DefaultListModel<String> playerListModel;
     private JList<String> playerList;
@@ -41,7 +42,7 @@ public class GameGUI extends JFrame {
         setContentPane(layeredPane);
 
         // Lobby Background Panel
-        JPanel backgroundPanel = new JPanel();
+        backgroundPanel = new JPanel();
         backgroundPanel.setBounds(0, 0, WINDOW_SIZE, WINDOW_SIZE);
         backgroundPanel.setLayout(null);
         lobbyBackground = new JLabel(new ImageIcon("../../resources/images/lobby_background.png"));

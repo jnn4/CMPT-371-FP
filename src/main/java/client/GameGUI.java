@@ -9,7 +9,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class GameGUI extends JFrame {
-    private static final int WINDOW_SIZE = 400;
+    private static final int WINDOW_SIZE = 1000;
     private static final int GRID_SIZE = 10;
     // Lobby UI
     private JPanel lobbyPanel;

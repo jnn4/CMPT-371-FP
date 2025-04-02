@@ -58,44 +58,57 @@ public class GameClient {
             while ((message = in.readLine()) != null) {
                 System.out.println("Server: " + message);
 
-                // set player ID when server assigns it
-                if (message.startsWith("ASSIGN_PLAYER,")) {
-                    playerId = message.split(",")[1];
-                    System.out.println("Player: " + playerId);
-                }
+                String[] parts = message.split(",");
+                String command = parts[0];
 
-                // Lobby state update (send post-fix of string only)
-                else if (message.startsWith("LOBBY_STATE: ")) {
-                    if (gui != null) {
-                        gui.updateLobby(message.substring("LOBBY_STATE: ".length()));
-                    }
-                }
-
-                // Countdown update
-                else if (message.startsWith("COUNTDOWN ")) {
-                    int seconds = Integer.parseInt(message.split(" ")[1]);
-                    if (gui != null) {
-                        gui.updateCountdown(seconds);
-                    }
-                }
-
-                // Countdown abort
-                else if (message.equals("COUNTDOWN_ABORTED")) {
-                    if (gui != null) {
-                        gui.abortCountdown();
-                    }
-                }
-
-                // Game start
-                else if (message.equals("GAME_STARTED")) {
-                    if (gui != null) {
-                        gui.startGame();
-                    }
-                }
-
-                // update GUI when player moves
-                if (gui != null) {
-                    gui.updateMaze(message);
+                switch (command) {
+                    case "ASSIGN_PLAYER":
+                        playerId = message.split(",")[1];
+                        System.out.println("Player: " + playerId);
+                        break;
+                    case "LOBBY_STATE":
+                        if (gui != null) {
+                            gui.updateLobby(message.substring("LOBBY_STATE,".length()));
+                        }
+                        break;
+                    case "COUNTDOWN":
+                        try {
+                            int seconds = Integer.parseInt(parts[1]);
+                            if (gui != null) {
+                                gui.updateCountdown(seconds);
+                            }
+                        } catch (NumberFormatException e) {
+                            System.err.println("Invalid countdown value received from server.");
+                        }
+                        break;
+                    case "COUNTDOWN_ABORTED":
+                        if (gui != null) {
+                            gui.abortCountdown();
+                        }
+                        break;
+                    case "GAME_STARTED":
+                        if (gui != null) {
+                            gui.startGame();
+                        }
+                        break;
+                    case "PLAYER_JOINED":
+                        if (gui != null) {
+                            gui.addPlayer(message.substring("PLAYER_JOINED,".length()));
+                        }
+                        break;
+                    case "PLAYER_MOVED":
+                        if (gui != null) {
+                            gui.updateMaze(message.substring("PLAYER_MOVED,".length()));
+                        }
+                        break;
+                    case "PLAYER_LEFT":
+                        if (gui != null) {
+                            gui.removePlayer(message.substring("PLAYER_LEFT,".length()));
+                        }
+                        break;
+                    default:
+                        System.err.println("Unknown command from server: " + command);
+                        break;
                 }
             }
         } catch (SocketException e) {
@@ -108,11 +121,12 @@ public class GameClient {
         }
     }
 
-    public void close() {
-        try {
-            if (socket != null) socket.close();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
+    // NOT USED ANYWHERE
+    // public void close() {
+    //     try {
+    //         if (socket != null) socket.close();
+    //     } catch (IOException e) {
+    //         e.printStackTrace();
+    //     }
+    // }
 }

@@ -55,6 +55,73 @@ public class GameServer {
         ClientHandler.broadcastLobbyState();
     }
 
+    // Game logic methods
+    public static synchronized boolean movePlayer(String playerId, int newX, int newY) {
+        Player player = players.get(playerId);
+        if (player == null) {
+            return false;
+        }
+
+        Square square = grid.getSquare(newX, newY);
+
+        if(square.tryLock(player)) {
+            player.setX(newX);
+            player.setY(newY);
+        }
+
+        return player.move(newX, newY, grid);
+    }
+
+    public static synchronized void determineWinner() {
+        Map<Player, Integer> scoreMap = new HashMap<>();
+
+        // count squares owned by each player
+        for(int i = 0; i < grid.getSize(); i++) {
+            for(int j = 0; j < grid.getSize(); j++) {
+                Player owner = grid.getSquare(i, j).getOwner();
+                if(owner != null) {
+                    scoreMap.put(owner, scoreMap.getOrDefault(owner, 0) + 1);
+                }
+            }
+        }
+        // find player with the most squares
+        Player winner = null;
+        int maxScore = 0;
+        for (Map.Entry<Player, Integer> entry : scoreMap.entrySet()) {
+            if(entry.getValue() > maxScore) {
+                winner = entry.getKey();
+                maxScore = entry.getValue();
+            }
+        }
+
+        if (winner != null) {
+            String message = "Winner: " + winner.getId() + " with " + maxScore + " squares!";
+            System.out.println(message);
+            broadcast("GAME_OVER," + winner.getId() + "," + maxScore);
+        }
+    }
+
+    public static synchronized void addPlayer(Player player) {
+        players.put(player.getId(), player);
+        grid.getSquare(player.getX(), player.getY()).tryLock(player);
+    }
+
+    public static synchronized void removePlayer(String playerId) {
+        Player player = players.remove(playerId);
+        if (player != null) {
+            grid.getSquare(player.getX(), player.getY()).unlock();
+        }
+    }
+
+    // Getters for grid and players
+    public static Grid getGrid() {
+        return grid;
+    }
+
+    public static Map<String, Player> getPlayers() {
+        return players;
+    }
+
     private static class ClientHandler implements Runnable {
         private final Socket socket;
         private PrintWriter out;
@@ -109,11 +176,11 @@ public class GameServer {
                 player = new Player(playerId, startX, startY, playerColor);
 
                 synchronized (players) {
-                    players.put(playerId, player);
+                    GameServer.addPlayer(player);
                 }
 
                 grid.getSquare(startX, startY).tryLock(player);
-                broadcast("PLAYER_JOINED " + playerId + " 0 0");
+                broadcast("PLAYER_JOINED," + playerId + "," + startX + "," + startY + "," + playerColor);
 
                 String message;
                 while ((message = in.readLine()) != null) {
@@ -129,7 +196,7 @@ public class GameServer {
         // Broadcast lobby's players and their readiness (so client's UI can update accordingly)
         private static void broadcastLobbyState() {
             synchronized (players) {
-                String lobbyState = ("LOBBY_STATE: ");
+                String lobbyState = ("LOBBY_STATE,");
                 for (Player player : players.values()) {
                     lobbyState += player.getId() + "," + (player.getReady() ? "READY" : "NOT_READY") + ";";
                 }
@@ -151,8 +218,6 @@ public class GameServer {
 
         // If all is ready, start countdown (can be cancelled if someone unready)
         private static void startGameCountdown() {
-            broadcast("GAME_STARTING");
-    
             for (int i = 3; i > 0; i--) {
                 synchronized (players) {
                     if (!allPlayersReady()) {
@@ -160,13 +225,12 @@ public class GameServer {
                         broadcastLobbyState();
                         return;
                     }
-                }
-    
-                broadcast("COUNTDOWN " + i);
-                try {
-                    Thread.sleep(1000);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
+                    broadcast("COUNTDOWN," + i);
+                    try {
+                        Thread.sleep(1000);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
                 }
             }
     
@@ -182,15 +246,8 @@ public class GameServer {
                     int newX = Integer.parseInt(parts[1]);
                     int newY = Integer.parseInt(parts[2]);
 
-                    Square square = grid.getSquare(newX, newY);
-
-                    if(square.tryLock(player)) {
-                        player.setX(newX);
-                        player.setY(newY);
-                    }
-
-                    if (player.move(newX, newY, grid)) {
-                        broadcast("PLAYER_MOVED " + player.getId() + " " + newX + " " + newY);
+                    if (GameServer.movePlayer(player.getId(), newX, newY)) {
+                        broadcast("PLAYER_MOVED," + player.getId() + " " + newX + " " + newY);
                     } else {
                         sendMessage("INVALID MOVE");
                     }
@@ -203,6 +260,7 @@ public class GameServer {
                 case "READY":
                     player.toggleReady();
                     broadcastLobbyState();
+                    System.out.println("Player " + player.getId() + " is " + (player.getReady() ? "ready" : "not ready"));
 
                     if (allPlayersReady()) {
                         startGameCountdown();
@@ -220,50 +278,18 @@ public class GameServer {
             }
         }
 
-        public static void determineWinner() {
-            Map<Player, Integer> scoreMap = new HashMap<>();
-
-            // count squares owned by each player
-            for(int i = 0; i < grid.getSize(); i++) {
-                for(int j = 0; j < grid.getSize(); j++) {
-                    Player owner = grid.getSquare(i, j).getOwner();
-                    if(owner != null) {
-                        scoreMap.put(owner, scoreMap.getOrDefault(owner, 0) + 1);
-                    }
-                }
-            }
-
-            // find player with the most squares
-            Player winner = null;
-            int maxScore = 0;
-            for (Map.Entry<Player, Integer> entry : scoreMap.entrySet()) {
-                if(entry.getValue() > maxScore) {
-                    winner = entry.getKey();
-                    maxScore = entry.getValue();
-                }
-            }
-
-            if (winner != null) {
-                String message = "Winner: " + winner.getId() + " with " + maxScore + " squares!";
-                System.out.println(message);
-                broadcast("GAME_OVER," + winner.getId() + "," + maxScore);
-            }
-        }
-
         private void cleanup() {
             try {
                 if (player != null) {
                     grid.getSquare(player.getX(), player.getY()).unlock();
                     synchronized (players) {
-                        players.remove(player.getId());
+                        GameServer.removePlayer(player.getId());
                         broadcastLobbyState();
                     }
-                    broadcast("PLAYER_LEFT " + player.getId());
+                    broadcast("PLAYER_LEFT," + player.getId());
                 }
 
-                synchronized (clients) {
-                    clients.remove(this);
-                }
+                GameServer.removeClient(this);
 
                 socket.close();
             } catch (IOException e) {

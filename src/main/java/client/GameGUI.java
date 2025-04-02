@@ -9,6 +9,8 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class GameGUI extends JFrame {
+    private static final int WINDOW_SIZE = 400;
+    private static final int GRID_SIZE = 10;
     // Lobby UI
     private JPanel lobbyPanel;
     private JLabel countdownLabel;
@@ -17,7 +19,6 @@ public class GameGUI extends JFrame {
     private JButton readyButton;
 
     // Game UI
-    private static final int GRID_SIZE = 10;
     private JLabel[][] grid;
     private Player localPlayer;
     private final GameClient client;
@@ -28,13 +29,13 @@ public class GameGUI extends JFrame {
     public GameGUI(GameClient client) {
         this.client = client;
         setTitle("Multiplayer Maze Game");
-        setSize(400, 400);
+        setSize(WINDOW_SIZE, WINDOW_SIZE);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLayout(new GridLayout(GRID_SIZE, GRID_SIZE));
 
         // Lobby setup
         setupLobbyPanel();
-        
+
         getContentPane().add(lobbyPanel, BorderLayout.CENTER);
         lobbyPanel.setVisible(true);
 
@@ -55,7 +56,7 @@ public class GameGUI extends JFrame {
 
     private void setupLobbyPanel() {
         lobbyPanel = new JPanel(new BorderLayout());
-        lobbyPanel.setPreferredSize(new Dimension(400, 400));
+        lobbyPanel.setPreferredSize(new Dimension(WINDOW_SIZE, WINDOW_SIZE));
 
         // Countdown label at the top
         countdownLabel = new JLabel("Waiting for players...", SwingConstants.CENTER);
@@ -66,7 +67,7 @@ public class GameGUI extends JFrame {
         playerList = new JList<>(playerListModel);
         playerList.setVisibleRowCount(4);
         playerList.setFixedCellHeight(20);
-        
+
         JScrollPane playerListScrollPane = new JScrollPane(playerList);
         playerListScrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
 
@@ -80,23 +81,24 @@ public class GameGUI extends JFrame {
         // buttonPanel.add(readyButton, BorderLayout.CENTER);
         lobbyPanel.add(readyButton, BorderLayout.PAGE_END);
     }
-    
+
     // ----- Lobby methods -----
     private void toggleReadyState() {
         if (readyButton.getText().equals("READY")) {
             client.sendMessage("READY");
             readyButton.setText("UNREADY");
+            System.out.println("Player is ready");
         } else {
             client.sendMessage("UNREADY");
             readyButton.setText("READY");
         }
     }
 
-    public void updateLobby(String lobbyState) {
+    public void updateLobby(String message) {
         SwingUtilities.invokeLater(() -> {
             // Update player list
             playerListModel.clear();
-            String[] players = lobbyState.split(";");
+            String[] players = message.split(";");
             for (String playerInfo : players) {
                 if (!playerInfo.isEmpty() && playerInfo.contains(",")) {
                     String[] parts = playerInfo.split(",");
@@ -127,12 +129,12 @@ public class GameGUI extends JFrame {
         getContentPane().removeAll();
         setLayout(new GridLayout(GRID_SIZE, GRID_SIZE));
         grid = new JLabel[GRID_SIZE][GRID_SIZE];
-        for (int row = 0; row < GRID_SIZE; row++) {
-            for (int col = 0; col < GRID_SIZE; col++) {
-                grid[row][col] = new JLabel(" ", SwingConstants.CENTER);
-                grid[row][col].setBorder(BorderFactory.createLineBorder(Color.BLACK));
-                grid[row][col].setOpaque(true);
-                add(grid[row][col]);
+        for (int col = 0; col < GRID_SIZE; col++) {
+            for (int row = 0; row < GRID_SIZE; row++) {
+                grid[col][row] = new JLabel(" ", SwingConstants.CENTER);
+                grid[col][row].setBorder(BorderFactory.createLineBorder(Color.BLACK));
+                grid[col][row].setOpaque(true);
+                add(grid[col][row]);
             }
         }
 
@@ -144,7 +146,53 @@ public class GameGUI extends JFrame {
         revalidate();
         repaint();
     }
+    public void addPlayer(String message) {
+        SwingUtilities.invokeLater(() -> {
+            String[] playerData = message.split(",");
+            if (playerData.length != 4) {
+                System.err.println("Invalid message format: " + message);
+                return;
+            }
+            String playerId = playerData[0];
+            int x = Integer.parseInt(playerData[1]);
+            int y = Integer.parseInt(playerData[2]);
+            String color = playerData[3];
+            // Ignore local player
+            if (this.localPlayer.getId().equals(playerId)) {
+                return;
+            }
+            
+            Player newPlayer = new Player(playerId, x, y, color);
+            players.put(playerId, newPlayer);
+            trailColors.put(playerId, calculateTrailColor(Color.decode(color)));
+            updatePlayerPosition(newPlayer);
+            revalidate();
+            repaint();
+        });
+    }
 
+    public void removePlayer(String playerId) {
+        SwingUtilities.invokeLater(() -> {
+            Player playerToRemove = players.remove(playerId);
+            if (playerToRemove != null) {
+                // Clear the player's last position
+                int x = playerToRemove.getX();
+                int y = playerToRemove.getY();
+                if (x >= 0 && x < GRID_SIZE && y >= 0 && y < GRID_SIZE && grid[y][x] != null) {
+                    grid[y][x].setText(" ");
+                    grid[y][x].setBackground(null); // default background color?
+                }
+                trailColors.remove(playerId);
+                System.out.println("Player " + playerId + " left the game.");
+                revalidate();
+                repaint();
+            } else {
+                System.err.println("Player " + playerId + " not found in players map.");
+            }
+        });
+    }
+
+    // ----- Local player methods -----
     private void setupKeyBindings() {
         InputMap im = getRootPane().getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW);
         ActionMap am = getRootPane().getActionMap();
@@ -217,29 +265,31 @@ public class GameGUI extends JFrame {
     public void updateMaze(String message) {
         SwingUtilities.invokeLater(() -> {
             String[] parts = message.split(",");
-            String command = parts[0];
-
-            if (command.equals("PLAYER_MOVED")) {
-                String playerId = parts[1];
-                int newX = Integer.parseInt(parts[2]);
-                int newY = Integer.parseInt(parts[3]);
-                String color = parts[4];
-
-                Player p = players.get(playerId);
-                if (p == null) {
-                    p = new Player(playerId, newX, newY, color);
-                    players.put(playerId, p);
-                    trailColors.put(playerId, calculateTrailColor(Color.decode(color)));
-                } else {
-                    int prevX = p.getX();
-                    int prevY = p.getY();
-                    updateTrail(prevX, prevY, playerId);
-                    p.setX(newX);
-                    p.setY(newY);
-                }
-
-                updatePlayerPosition(p);
+            if (parts.length != 4) {
+                System.err.println("Invalid message format: " + message);
+                return;
             }
+            
+            // Messaged currently looks like: "playerId,newX,newY,color"
+            String playerId = parts[0];
+            int newX = Integer.parseInt(parts[1]);
+            int newY = Integer.parseInt(parts[2]);
+            String color = parts[3];
+
+            Player p = players.get(playerId);
+            if (p == null) {
+                p = new Player(playerId, newX, newY, color);
+                players.put(playerId, p);
+                trailColors.put(playerId, calculateTrailColor(Color.decode(color)));
+            } else {
+                int prevX = p.getX();
+                int prevY = p.getY();
+                updateTrail(prevX, prevY, playerId);
+                p.setX(newX);
+                p.setY(newY);
+            }
+
+            updatePlayerPosition(p);
         });
     }
 

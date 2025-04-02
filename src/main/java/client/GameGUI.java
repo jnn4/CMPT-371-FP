@@ -46,9 +46,14 @@ public class GameGUI extends JFrame {
         backgroundPanel.setBounds(0, 0, WINDOW_SIZE, WINDOW_SIZE);
         backgroundPanel.setLayout(null);
         lobbyBackground = new JLabel(new ImageIcon("../../resources/images/lobby_background.png"));
-        lobbyBackground.setBounds(0, 0, WINDOW_SIZE, WINDOW_SIZE);
+        lobbyBackground.setBounds(0, 0, 2065, 1000);
         backgroundPanel.add(lobbyBackground);
         layeredPane.add(backgroundPanel, JLayeredPane.DEFAULT_LAYER);
+
+        // Logo Panel
+        JLabel logoLabel = new JLabel(new ImageIcon("../../resources/images/onigiri_wars_logo.png"));
+        logoLabel.setBounds(125, 345, 767, 146);
+        layeredPane.add(logoLabel, JLayeredPane.PALETTE_LAYER); 
 
         // Setup Lobby Panel
         setupLobbyPanel();

@@ -36,7 +36,7 @@ public class GameGUI extends JFrame {
     // Constructor
     public GameGUI(GameClient client) {
         this.client = client;
-        setTitle("Multiplayer Maze Game");
+        setTitle("ONIGIRI WARS");
         setSize(WINDOW_SIZE, WINDOW_SIZE);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLayout(null);

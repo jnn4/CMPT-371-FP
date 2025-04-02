@@ -57,7 +57,7 @@ public class GameGUI extends JFrame {
 
         // Logo Panel
         logoLabel = new JLabel(new ImageIcon("../../resources/images/onigiri_wars_logo.png"));
-        logoLabel.setBounds(125, 345, 767, 146);
+        logoLabel.setBounds(100, 345, 767, 146);
         layeredPane.add(logoLabel, JLayeredPane.PALETTE_LAYER); 
 
         // Press Any Key To Start Label
@@ -71,7 +71,7 @@ public class GameGUI extends JFrame {
             startPromptText = new JLabel("> PRESS ANY KEY TO START");
             startPromptText.setFont(fontInkyThinPixels);
             startPromptText.setForeground(new Color(41,50,65));
-            startPromptText.setBounds(440, 530, 450, 55);
+            startPromptText.setBounds(430, 530, 450, 55);
 
             // Add the text label to the layered pane
             layeredPane.add(startPromptText, JLayeredPane.PALETTE_LAYER);

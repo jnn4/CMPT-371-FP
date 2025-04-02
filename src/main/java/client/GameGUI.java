@@ -14,6 +14,7 @@ public class GameGUI extends JFrame {
     // Lobby UI
     private JPanel lobbyPanel;
     private JLabel lobbyBackground;
+    private JLayeredPane layeredPane;
     private JLabel countdownLabel;
     private DefaultListModel<String> playerListModel;
     private JList<String> playerList;
@@ -32,17 +33,40 @@ public class GameGUI extends JFrame {
         setTitle("Multiplayer Maze Game");
         setSize(WINDOW_SIZE, WINDOW_SIZE);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setLayout(new GridLayout(GRID_SIZE, GRID_SIZE));
+        setLayout(null);
 
-        // Lobby Background
+        // Create layered pane
+        layeredPane = new JLayeredPane();
+        layeredPane.setBounds(0, 0, WINDOW_SIZE, WINDOW_SIZE);
+        setContentPane(layeredPane);
+
+        // Lobby Background Panel
+        JPanel backgroundPanel = new JPanel();
+        backgroundPanel.setBounds(0, 0, WINDOW_SIZE, WINDOW_SIZE);
+        backgroundPanel.setLayout(null);
         lobbyBackground = new JLabel(new ImageIcon("../../resources/images/lobby_background.png"));
-        setContentPane(lobbyBackground);
+        lobbyBackground.setBounds(0, 0, WINDOW_SIZE, WINDOW_SIZE);
+        backgroundPanel.add(lobbyBackground);
+        layeredPane.add(backgroundPanel, JLayeredPane.DEFAULT_LAYER);
 
-        // Lobby setup
+        // Setup Lobby Panel
         setupLobbyPanel();
+        lobbyPanel.setBounds(0, 0, WINDOW_SIZE, WINDOW_SIZE);
+        lobbyPanel.setOpaque(false);
+        lobbyPanel.setVisible(false); // Initially hidden
+        layeredPane.add(lobbyPanel, JLayeredPane.PALETTE_LAYER); // Place above background
 
-        getContentPane().add(lobbyPanel, BorderLayout.CENTER);
-        lobbyPanel.setVisible(true);
+        // Add KeyListener to detect any key press
+        addKeyListener(new KeyAdapter() {
+            @Override
+            public void keyPressed(KeyEvent e) {
+                lobbyPanel.setVisible(true); // Show lobby panel when any key is pressed
+            }
+        });
+
+        // Ensure focus for key detection
+        setFocusable(true);
+        requestFocusInWindow();
 
         // Game setup
         // Create local player

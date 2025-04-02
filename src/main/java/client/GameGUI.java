@@ -7,6 +7,8 @@ import java.awt.*;
 import java.awt.event.*;
 import java.util.HashMap;
 import java.util.Map;
+import java.io.File;
+import java.io.IOException;
 
 public class GameGUI extends JFrame {
     private static final int WINDOW_SIZE = 1000;
@@ -15,6 +17,8 @@ public class GameGUI extends JFrame {
     private JPanel backgroundPanel;
     private JLabel lobbyBackground;
     private JLabel logoLabel;
+    private JLabel startPromptText;
+    private Font fontInkyThinPixels;
     private JLayeredPane layeredPane;
     private JPanel lobbyPanel;
     private JLabel countdownLabel;
@@ -55,6 +59,26 @@ public class GameGUI extends JFrame {
         logoLabel = new JLabel(new ImageIcon("../../resources/images/onigiri_wars_logo.png"));
         logoLabel.setBounds(125, 345, 767, 146);
         layeredPane.add(logoLabel, JLayeredPane.PALETTE_LAYER); 
+
+        // Press Any Key To Start Label
+        try {
+            // Load the Inky Thin Pixels font file from resources
+            fontInkyThinPixels = Font.createFont(Font.TRUETYPE_FONT, new File("../../resources/fonts/Inky Thin Pixels.ttf")).deriveFont(48f);
+            GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
+            ge.registerFont(fontInkyThinPixels);
+
+            // Create JLabel with custom font
+            startPromptText = new JLabel("> PRESS ANY KEY TO START");
+            startPromptText.setFont(fontInkyThinPixels);
+            startPromptText.setForeground(new Color(41,50,65));
+            startPromptText.setBounds(440, 530, 450, 55);
+
+            // Add the text label to the layered pane
+            layeredPane.add(startPromptText, JLayeredPane.PALETTE_LAYER);
+
+        } catch (FontFormatException | IOException e) {
+            e.printStackTrace();
+        }
 
         // Setup Lobby Panel
         setupLobbyPanel();

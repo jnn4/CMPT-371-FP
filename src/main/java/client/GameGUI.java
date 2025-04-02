@@ -80,6 +80,19 @@ public class GameGUI extends JFrame {
             e.printStackTrace();
         }
 
+        // Timer for blinking effect
+        Timer timer = new Timer(600, new ActionListener() {
+            private boolean isVisible = true; // Track visibility state
+        
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                isVisible = !isVisible; // Toggle visibility
+                startPromptText.setVisible(isVisible);
+            }
+        });
+
+        timer.start();
+
         // Setup Lobby Panel
         setupLobbyPanel();
         lobbyPanel.setBounds(0, 0, WINDOW_SIZE, WINDOW_SIZE);
@@ -93,6 +106,8 @@ public class GameGUI extends JFrame {
             public void keyPressed(KeyEvent e) {
                 lobbyPanel.setVisible(true); // Show lobby panel when any key is pressed
                 logoLabel.setVisible(false); // Hide logo when any key is pressed
+                timer.stop();
+                startPromptText.setVisible(false); // Hide "Press Any Key To Start" text when any key is pressed
             }
         });
 

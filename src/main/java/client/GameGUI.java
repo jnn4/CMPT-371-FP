@@ -14,6 +14,7 @@ public class GameGUI extends JFrame {
     // Lobby UI
     private JPanel backgroundPanel;
     private JLabel lobbyBackground;
+    private JLabel logoLabel;
     private JLayeredPane layeredPane;
     private JPanel lobbyPanel;
     private JLabel countdownLabel;
@@ -51,7 +52,7 @@ public class GameGUI extends JFrame {
         layeredPane.add(backgroundPanel, JLayeredPane.DEFAULT_LAYER);
 
         // Logo Panel
-        JLabel logoLabel = new JLabel(new ImageIcon("../../resources/images/onigiri_wars_logo.png"));
+        logoLabel = new JLabel(new ImageIcon("../../resources/images/onigiri_wars_logo.png"));
         logoLabel.setBounds(125, 345, 767, 146);
         layeredPane.add(logoLabel, JLayeredPane.PALETTE_LAYER); 
 

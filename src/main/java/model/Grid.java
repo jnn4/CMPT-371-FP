@@ -1,26 +1,25 @@
 package main.java.model;
 
-import java.util.Vector;
-
 public class Grid {
     private final int size;
-    private Vector<Vector<Square>> grid;
+    private final Square[][] grid;
 
     public Grid(int size) {
         this.size = size;
-        grid = new Vector<>(size);
+        grid = new Square[size][size];
         for(int i = 0; i < size; i++) {
-            Vector<Square> row = new Vector<>(size);
-            for(int j = 0; j < size; j++) {
-                row.add(new Square());
+            for (int j = 0; j < size; j++) {
+                grid[i][j] = new Square();
             }
-            grid.add(row);
         }
-
     }
 
     public Square getSquare(int x, int y) {
-        return grid.get(x).get(y);
+        if (0 <= x && x < size && 0 <= y && y < size) {
+            return grid[x][y];
+        } else {
+            throw new IndexOutOfBoundsException("Coordinates out of bounds");
+        }
     }
 
     public int getSize() {

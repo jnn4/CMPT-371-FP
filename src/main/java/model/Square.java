@@ -3,10 +3,10 @@ package main.java.model;
 import java.util.concurrent.locks.ReentrantLock;
 
 public class Square {
-   private final ReentrantLock lock = new ReentrantLock();
-   private Player owner = null;
+    private final ReentrantLock lock = new ReentrantLock();
+    private Player owner = null;
 
-   // check if square is locked
+    // check if square is locked
     public boolean isLocked() {
         return lock.isLocked();
     }
@@ -19,7 +19,7 @@ public class Square {
     // check if square can be entered by the player
     public boolean canEnter(Player player) {
         // if locked, only owner can enter
-        return !lock.isLocked() || owner == player;
+        return !isLocked() || owner == player;
     }
 
     // try to lock square for a player

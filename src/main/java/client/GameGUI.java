@@ -55,7 +55,7 @@ public class GameGUI extends JFrame {
 
         // Lobby Background Panel
         backgroundPanel = new JPanel();
-        backgroundPanel.setBounds(0, 0, WINDOW_SIZE, WINDOW_SIZE);
+        backgroundPanel.setBounds(0, 0, 2065, 1000);
         backgroundPanel.setLayout(null);
         lobbyBackground = new JLabel(new ImageIcon("../../resources/images/lobby_background.png"));
         lobbyBackground.setBounds(0, 0, 2065, 1000);

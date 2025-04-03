@@ -34,6 +34,7 @@ public class GameGUI extends JFrame {
     // Game UI
     private JLabel[][] grid;
     private Player localPlayer;
+    private ImageIcon characterIcon;
     private final GameClient client;
     private final Map<String, Player> players = new HashMap<>();
     private final Map<String, Color> trailColors = new HashMap<>();
@@ -125,6 +126,8 @@ public class GameGUI extends JFrame {
         this.localPlayer = new Player("you", 0, 0, "#00FF00");
         players.put(localPlayer.getId(), localPlayer);
         trailColors.put(localPlayer.getId(), calculateTrailColor(Color.decode(localPlayer.getColor())));
+
+        characterIcon = new ImageIcon("../../resources/images/sprites/p1.png");
 
         updatePlayerPosition(localPlayer);
 
@@ -247,7 +250,7 @@ public class GameGUI extends JFrame {
 
     public void updateCountdown(int seconds) {
         SwingUtilities.invokeLater (() -> {
-            countdownLabel.setText("Game starting in " + seconds);
+            countdownLabel.setText("GAME STARTING IN " + seconds);
         });
     }
 
@@ -264,7 +267,7 @@ public class GameGUI extends JFrame {
         grid = new JLabel[GRID_SIZE][GRID_SIZE];
         for (int col = 0; col < GRID_SIZE; col++) {
             for (int row = 0; row < GRID_SIZE; row++) {
-                grid[col][row] = new JLabel(" ", SwingConstants.CENTER);
+                grid[col][row] = new JLabel("", SwingConstants.CENTER);
                 grid[col][row].setBorder(BorderFactory.createLineBorder(Color.BLACK));
                 grid[col][row].setOpaque(true);
                 add(grid[col][row]);
@@ -312,7 +315,7 @@ public class GameGUI extends JFrame {
                 int x = playerToRemove.getX();
                 int y = playerToRemove.getY();
                 if (x >= 0 && x < GRID_SIZE && y >= 0 && y < GRID_SIZE && grid[y][x] != null) {
-                    grid[y][x].setText(" ");
+                    grid[y][x].setIcon(null);
                     grid[y][x].setBackground(null); // default background color?
                 }
                 trailColors.remove(playerId);
@@ -377,17 +380,19 @@ public class GameGUI extends JFrame {
 
     private void updateTrail(int x, int y, String playerId) {
         if (grid != null) {
-            grid[y][x].setText(""); // <- FIXED
             grid[y][x].setBackground(trailColors.get(playerId)); // <- FIXED
+            grid[y][x].setIcon(null);
         }
     }
 
     private void updatePlayerPosition(Player player) {
         if (grid != null) {
             int x = player.getX();
-            int y = player.getY();
-            grid[y][x].setText("P"); // <- FIXED
+            int y = player.getY();            
             grid[y][x].setBackground(Color.decode(player.getColor())); // <- FIXED
+    
+            // Set the resized image as icon
+            grid[y][x].setIcon(characterIcon);
         }
     }
 

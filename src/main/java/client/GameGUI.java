@@ -23,8 +23,9 @@ public class GameGUI extends JFrame {
     private JLayeredPane layeredPane;
 
     // Lobby UI
-    private JLabel howToPlayLabel;
     private JLayeredPane lobbyPanel;
+    private JLabel howToPlayLabel;
+    private JLabel instructions;
     private JLabel playersContainerLabel;
     private JLabel countdownLabel;
     private DefaultListModel<String> playerListModel;
@@ -156,7 +157,7 @@ public class GameGUI extends JFrame {
 
             // Create JLabel with custom font
             // Have to use <html> and <br> tags for newline support
-            JLabel instructions = new JLabel(
+            instructions = new JLabel(
                 "<html>Capture tiles by stepping on them! Other players can't<br>" + 
                 "step on your territory so maneuver around them<br>" + 
                 "to capture the largest area you can. The player with the<br>" + 
@@ -262,15 +263,23 @@ public class GameGUI extends JFrame {
 
     // ----- Game methods -----
     public void startGame() {
-        getContentPane().removeAll();
-        setLayout(new GridLayout(GRID_SIZE, GRID_SIZE));
+        // Remove all of the components in the How To Play screen
+        for (Component comp : lobbyPanel.getComponentsInLayer(JLayeredPane.PALETTE_LAYER)) {
+            lobbyPanel.remove(comp);
+        }
+        lobbyPanel.remove(howToPlayLabel);
+        lobbyPanel.remove(playersContainerLabel);
+
+        JPanel gridPanel = new JPanel(new GridLayout(GRID_SIZE, GRID_SIZE));
+        gridPanel.setPreferredSize(new Dimension(800, 800));
+
         grid = new JLabel[GRID_SIZE][GRID_SIZE];
         for (int col = 0; col < GRID_SIZE; col++) {
             for (int row = 0; row < GRID_SIZE; row++) {
                 grid[col][row] = new JLabel("", SwingConstants.CENTER);
                 grid[col][row].setBorder(BorderFactory.createLineBorder(Color.BLACK));
                 grid[col][row].setOpaque(true);
-                add(grid[col][row]);
+                gridPanel.add(grid[col][row]);
             }
         }
 
@@ -278,6 +287,9 @@ public class GameGUI extends JFrame {
         for (Player player : players.values()) {
             updatePlayerPosition(player);
         }
+
+        gridPanel.setBounds(100, 100, 800, 800);
+        lobbyPanel.add(gridPanel, JLayeredPane.DEFAULT_LAYER);
 
         revalidate();
         repaint();

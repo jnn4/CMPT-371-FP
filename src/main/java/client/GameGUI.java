@@ -30,6 +30,7 @@ public class GameGUI extends JFrame {
     private JLabel countdownLabel;
     private DefaultListModel<String> playerListModel;
     private JList<String> playerList;
+    private JScrollPane playerListScrollPane;
     private JButton readyButton;
 
     // Game UI
@@ -204,7 +205,7 @@ public class GameGUI extends JFrame {
         playerList.setVisibleRowCount(4);
         playerList.setFixedCellHeight(20);
 
-        JScrollPane playerListScrollPane = new JScrollPane(playerList);
+        playerListScrollPane = new JScrollPane(playerList);
 
         playerListScrollPane.setPreferredSize(new Dimension(200, 150));
         playerListScrollPane.setBounds(550, 600, 300, 100);
@@ -263,13 +264,6 @@ public class GameGUI extends JFrame {
 
     // ----- Game methods -----
     public void startGame() {
-        // Remove all of the components in the How To Play screen
-        for (Component comp : lobbyPanel.getComponentsInLayer(JLayeredPane.PALETTE_LAYER)) {
-            lobbyPanel.remove(comp);
-        }
-        lobbyPanel.remove(howToPlayLabel);
-        lobbyPanel.remove(playersContainerLabel);
-
         JPanel gridPanel = new JPanel(new GridLayout(GRID_SIZE, GRID_SIZE));
         gridPanel.setPreferredSize(new Dimension(800, 800));
 
@@ -288,9 +282,47 @@ public class GameGUI extends JFrame {
             updatePlayerPosition(player);
         }
 
-        gridPanel.setBounds(100, 100, 800, 800);
+        gridPanel.setBounds(1000, 100, 800, 800);
         lobbyPanel.add(gridPanel, JLayeredPane.DEFAULT_LAYER);
 
+        // Create a Timer to make the background and grid scroll
+        Timer timer = new Timer(5, new ActionListener() {
+            int xPosition = 0;  // Position of the background image and grid panel
+            int speed = 10; // Initial speed of scrolling
+        
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                // Scroll the background, grid, and labels
+                if (xPosition <= -900) {
+                    xPosition = -900;
+                    // Remove components after reaching target position
+                    for (Component comp : lobbyPanel.getComponentsInLayer(JLayeredPane.PALETTE_LAYER)) {
+                        lobbyPanel.remove(comp);
+                    }
+                    lobbyPanel.remove(howToPlayLabel);
+                    lobbyPanel.remove(playersContainerLabel);
+                } else {
+                    // Gradually decrease the speed as the position moves
+                    if (xPosition <= -800) {
+                        speed = 5; // Slow down when nearing the end
+                    }
+                    xPosition -= speed; 
+                }
+
+                // Set new bounds for the background and grid
+                lobbyBackground.setBounds(xPosition, 0, 2065, 1000);
+                gridPanel.setBounds(xPosition + 1000, 100, 800, 800); 
+                howToPlayLabel.setBounds(xPosition + 200, 100, 604, 207); 
+                playersContainerLabel.setBounds(xPosition + 500, 512, 382, 355);
+                instructions.setBounds(xPosition + 100, 265, 870, 170);
+                countdownLabel.setBounds(xPosition + 530, 800, 370, 50);
+                playerListScrollPane.setBounds(xPosition + 550, 600, 300, 100);
+                readyButton.setBounds(xPosition + 550, 700, 300, 50);
+            }
+        });
+
+        // Start the scrolling timer
+        timer.start();
         revalidate();
         repaint();
     }

@@ -26,6 +26,7 @@ public class GameGUI extends JFrame {
     private JLayeredPane lobbyPanel;
     private JLabel howToPlayLabel;
     private JLabel instructions;
+    private JLabel controls;
     private JLabel playersContainerLabel;
     private JLabel countdownLabel;
     private DefaultListModel<String> playerListModel;
@@ -194,9 +195,14 @@ public class GameGUI extends JFrame {
 
         timer.start();
 
+        // Container for controls
+        controls = new JLabel(new ImageIcon("../../resources/images/controls.png"));
+        controls.setBounds(137, 512, 253, 246);
+        lobbyPanel.add(controls, JLayeredPane.DEFAULT_LAYER);
+
         // Container for players joined
         playersContainerLabel = new JLabel(new ImageIcon("../../resources/images/players_container.png"));
-        playersContainerLabel.setBounds(500, 512, 382, 355);
+        playersContainerLabel.setBounds(500, 512, 390, 355);
         lobbyPanel.add(playersContainerLabel, JLayeredPane.DEFAULT_LAYER);
 
         // Player list in the center
@@ -315,6 +321,7 @@ public class GameGUI extends JFrame {
                 howToPlayLabel.setBounds(xPosition + 200, 100, 604, 207); 
                 playersContainerLabel.setBounds(xPosition + 500, 512, 382, 355);
                 instructions.setBounds(xPosition + 100, 265, 870, 170);
+                controls.setBounds(xPosition + 137, 512, 253, 246);
                 countdownLabel.setBounds(xPosition + 530, 800, 370, 50);
                 playerListScrollPane.setBounds(xPosition + 550, 600, 300, 100);
                 readyButton.setBounds(xPosition + 550, 700, 300, 50);

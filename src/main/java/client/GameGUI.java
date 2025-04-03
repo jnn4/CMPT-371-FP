@@ -123,7 +123,7 @@ public class GameGUI extends JFrame {
 
         // Game setup
         // Create local player
-        this.localPlayer = new Player("you", 0, 0, "#00FF00");
+        this.localPlayer = new Player("you", 0, 0, "#F0ADC6");
         players.put(localPlayer.getId(), localPlayer);
         trailColors.put(localPlayer.getId(), calculateTrailColor(Color.decode(localPlayer.getColor())));
 
@@ -433,9 +433,9 @@ public class GameGUI extends JFrame {
 
     private Color calculateTrailColor(Color base) {
         return new Color(
-                Math.max(base.getRed() - 50, 0),
-                Math.max(base.getGreen() - 50, 0),
-                Math.max(base.getBlue() - 50, 0)
+                Math.max(base.getRed(), 0),
+                Math.max(base.getGreen(), 0),
+                Math.max(base.getBlue(), 0)
         );
     }
 

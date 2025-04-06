@@ -62,11 +62,31 @@ public class GameServer {
             return false;
         }
 
-        Square square = grid.getSquare(newX, newY);
+        // Check if the move is valid (adjacent to current position)
+        int currentX = player.getX();
+        int currentY = player.getY();
 
-        if(square.tryLock(player)) {
-            player.setX(newX);
-            player.setY(newY);
+        // Only allow moves to adjacent squares
+        if (Math.abs(newX - currentX) + Math.abs(newY - currentY) != 1) {
+            System.out.println("Invalid move from (" + currentX + "," + currentY + ") to (" + newX + "," + newY + ")");
+            return false;
+        }
+
+        Square square = grid.getSquare(newX, newY);
+        boolean moved = false;
+        if(square.canEnter(player)) {
+            player.move(newX, newY, grid);
+            moved = true;
+        }
+
+        if(square.canEnter(player)) {
+            player.move(newX, newY, grid);
+            if(square.getOwner() == player) {
+                // square claimed by player, broadcast
+                broadcast("SQUARE_CLAIMED," + newX + "," + newY + "," + player.getId() + "," + player.getColor());
+            }
+            // Broadcast player movement
+            broadcast("PLAYER_MOVED," + player.getId() + "," + newX + "," + newY);
         }
 
         return player.move(newX, newY, grid);
@@ -118,7 +138,7 @@ public class GameServer {
         return grid;
     }
 
-    public static Map<String, Player> getPlayers() {
+    public static synchronized Map<String, Player> getPlayers() {
         return players;
     }
 
@@ -174,6 +194,7 @@ public class GameServer {
                 };
 
                 player = new Player(playerId, startX, startY, playerColor);
+                sendInitialBoardState();
 
                 synchronized (players) {
                     GameServer.addPlayer(player);
@@ -190,6 +211,29 @@ public class GameServer {
                 System.out.println("Client disconnected: " + player.getId());
             } finally {
                 cleanup();
+            }
+        }
+
+        // send initial board state to all players
+        private void sendInitialBoardState() {
+            sendMessage("GRID_SIZE, " + grid.getSize() + "," + grid.getSize());
+
+            // send all square states
+            for(int i = 0; i < grid.getSize(); i++) {
+                for(int j = 0; j < grid.getSize(); j++) {
+                    Square square = grid.getSquare(i, j);
+                    Player owner = square.getOwner();
+                    if(owner != null) {
+                        sendMessage("SQUARE_STATE," + i + "," + j + "," + owner.getId() + "," + owner.getColor());
+                    }
+                }
+            }
+
+            // send all current player positions
+            synchronized (players) {
+                for(Player p : GameServer.getPlayers().values()) {
+                    sendMessage("PLAYER_POSITION," + p.getId() + "," + p.getX() + "," + p.getY() + "," + p.getColor());
+                }
             }
         }
 
@@ -235,7 +279,24 @@ public class GameServer {
             }
     
             broadcast("GAME_STARTED"); // Notify clients to transition to the game
-            // todo: Logic for transitioning into the actual game
+            // set starting positions for all players
+            synchronized (players) {
+                int gridSize = grid.getSize();
+                for (Player p : players.values()) {
+                    switch (p.getId()) {
+                        case "P1" -> { p.setX(0); p.setY(0); }
+                        case "P2" -> { p.setX(gridSize - 1); p.setY(0); }
+                        case "P3" -> { p.setX(0); p.setY(gridSize - 1); }
+                        case "P4" -> { p.setX(gridSize - 1); p.setY(gridSize - 1); }
+                        default -> {
+                            p.setX((gridSize - 1) / 2);
+                            p.setY((gridSize - 1) / 2);
+                        }
+                    }
+                    grid.getSquare(p.getX(), p.getY()).tryLock(p);
+                    broadcast("PLAYER_MOVED," +  p.getX() + "," + p.getY() + "," + p.getId() + "," + p.getColor());
+                }
+            }
         }
 
         // Handle messages from the clients
@@ -246,10 +307,8 @@ public class GameServer {
                     int newX = Integer.parseInt(parts[1]);
                     int newY = Integer.parseInt(parts[2]);
 
-                    if (GameServer.movePlayer(player.getId(), newX, newY)) {
-                        broadcast("PLAYER_MOVED," + player.getId() + " " + newX + " " + newY);
-                    } else {
-                        sendMessage("INVALID MOVE");
+                    if (!GameServer.movePlayer(player.getId(), newX, newY)) {
+                        broadcast("INVALID_MOVE");
                     }
                     break;
                 

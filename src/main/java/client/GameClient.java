@@ -63,8 +63,16 @@ public class GameClient {
 
                 switch (command) {
                     case "ASSIGN_PLAYER":
-                        playerId = message.split(",")[1];
-                        System.out.println("Player: " + playerId);
+                        playerId = parts[1];
+                        int startX = Integer.parseInt(parts[2]);
+                        int startY = Integer.parseInt(parts[3]);
+                        int endX = Integer.parseInt(parts[4]);
+                        String playerColor = parts[5];
+                        // create local player at assigned position
+                        if(gui != null) {
+                            gui.setLocalPlayer(playerId, startX, startY, playerColor);
+                        }
+                        System.out.println("Player: " + playerId + " at position (" + startX + ", " + startY + ")");
                         break;
                     case "LOBBY_STATE":
                         if (gui != null) {
@@ -97,13 +105,30 @@ public class GameClient {
                         }
                         break;
                     case "PLAYER_MOVED":
-                        if (gui != null) {
-                            gui.updateMaze(message.substring("PLAYER_MOVED,".length()));
-                        }
+                        String[] playerParts = message.substring("PLAYER_MOVED,".length()).split(",");
+                        int newX = Integer.parseInt(playerParts[0]);
+                        int newY = Integer.parseInt(playerParts[1]);
+                        String playerId = parts[2];
+                        gui.movePlayer(playerId, newX, newY);
                         break;
                     case "PLAYER_LEFT":
                         if (gui != null) {
                             gui.removePlayer(message.substring("PLAYER_LEFT,".length()));
+                        }
+                        break;
+                    case "GRID_STATE":
+                        String gridStateData = message.substring("GRID_STATE".length());
+                        gui.initializeBoard(gridStateData);
+                        break;
+                    case "SQUARE_CLAIMED":
+                        String[] squareParts = message.substring("SQUARE_CLAIMED,".length()).split(",");
+                        if (squareParts.length >= 3) {
+                            int x = Integer.parseInt(squareParts[0]);
+                            int y = Integer.parseInt(squareParts[1]);
+                            String playerid = squareParts[2];
+                            if (gui != null) {
+                                gui.updateSquareOwnership(x, y, playerid);
+                            }
                         }
                         break;
                     default:

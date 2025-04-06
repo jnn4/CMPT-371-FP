@@ -39,13 +39,6 @@ public class GameGUI extends JFrame {
         getContentPane().add(lobbyPanel, BorderLayout.CENTER);
         lobbyPanel.setVisible(true);
 
-        // Game setup
-        // Create local player
-        this.localPlayer = new Player("you", 0, 0, "#00FF00");
-        players.put(localPlayer.getId(), localPlayer);
-        trailColors.put(localPlayer.getId(), calculateTrailColor(Color.decode(localPlayer.getColor())));
-
-        updatePlayerPosition(localPlayer);
 
         setupKeyBindings();
 
@@ -192,6 +185,31 @@ public class GameGUI extends JFrame {
         });
     }
 
+    public void movePlayer(String playerId, int newX, int newY) {
+        SwingUtilities.invokeLater(() -> {
+            Player player = players.get(playerId);
+            if(player!= null) {
+                int oldX = player.getX();
+                int oldY = player.getY();
+
+                updateTrail(oldX, oldY, playerId);
+
+                player.setX(newX);
+                player.setY(newY);
+                updatePlayerPosition(player);
+            }
+        });
+    }
+
+    public void setLocalPlayer(String id, int x, int y, String color) {
+        this.localPlayer = new Player(id, x, y, color);
+        players.put(id, localPlayer);
+        trailColors.put(id, calculateTrailColor(Color.decode(color)));
+        if(grid != null) {
+            updatePlayerPosition(localPlayer);
+        }
+
+    }
     // ----- Local player methods -----
     private void setupKeyBindings() {
         InputMap im = getRootPane().getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW);
@@ -205,30 +223,78 @@ public class GameGUI extends JFrame {
         am.put("moveUp", new AbstractAction() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                attemptMove(localPlayer.getX(), localPlayer.getY() - 1);
+                if(localPlayer != null) {
+                    attemptMove(localPlayer.getX(), localPlayer.getY() - 1);
+                }
             }
         });
         am.put("moveDown", new AbstractAction() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                attemptMove(localPlayer.getX(), localPlayer.getY() + 1);
+                if(localPlayer != null) {
+                    attemptMove(localPlayer.getX(), localPlayer.getY() + 1);
+                }
             }
         });
         am.put("moveLeft", new AbstractAction() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                attemptMove(localPlayer.getX() - 1, localPlayer.getY());
+                if(localPlayer != null) {
+                    attemptMove(localPlayer.getX() - 1, localPlayer.getY());
+                }
             }
         });
         am.put("moveRight", new AbstractAction() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                attemptMove(localPlayer.getX() + 1, localPlayer.getY());
+                if(localPlayer != null) {
+                    attemptMove(localPlayer.getX() + 1, localPlayer.getY());
+                }
+            }
+        });
+    }
+
+    // update single square's ownership
+    public void updateSquareOwnership(int x, int y, String playerId) {
+        SwingUtilities.invokeLater(() -> {
+            if (grid != null && x >= 0 && x < GRID_SIZE && y >= 0 && y < GRID_SIZE) {
+                Color color = trailColors.get(playerId);
+                if(color != null) {
+                    grid[y][x].setBackground(color);
+                    revalidate();
+                    repaint();
+                }
+            }
+        });
+    }
+
+    // handle initial board state message from server
+    public void initializeBoard(String message) {
+        SwingUtilities.invokeLater(() -> {
+            // Format: "GRID_STATE,x1,y1,playerId1,color1;x2,y2,playerId2,color2;..."
+            String[] squares = message.split(";");
+
+            for(String square : squares) {
+                String[] parts = square.split(",");
+                int x = Integer.parseInt(parts[0]);
+                int y = Integer.parseInt(parts[1]);
+                String ownerId = parts[2];
+
+                // if there is an owner, update the square
+                if(!ownerId.equals("null")) {
+                    if(!trailColors.containsKey(ownerId) && parts.length >= 4) {
+                        String color = parts[3];
+                        trailColors.put(ownerId, calculateTrailColor(Color.decode(color)));
+                    }
+                    updateSquareOwnership(x, y, ownerId);
+                }
             }
         });
     }
 
     private void attemptMove(int newX, int newY) {
+        if(localPlayer == null) return;
+
         if (isValidMove(newX, newY)) {
             int oldX = localPlayer.getX();
             int oldY = localPlayer.getY();
@@ -255,6 +321,7 @@ public class GameGUI extends JFrame {
             int y = player.getY();
             grid[y][x].setText("P"); // <- FIXED
             grid[y][x].setBackground(Color.decode(player.getColor())); // <- FIXED
+            System.out.println("Hello!");
         }
     }
 
@@ -290,6 +357,8 @@ public class GameGUI extends JFrame {
             }
 
             updatePlayerPosition(p);
+            revalidate();
+            repaint();
         });
     }
 

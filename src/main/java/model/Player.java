@@ -37,13 +37,24 @@ public class Player {
     public boolean move(int newX, int newY, Grid grid) {
         Square next = grid.getSquare(newX, newY);
 
-        if(next.canEnter(this)) {
-            next.tryLock(this);
-            x = newX;
-            y = newY;
-            return true;
+        // If the square is a wall, the player cannot move there
+        if (next.isWall()) {
+            return false; // Move blocked if the square is a wall
         }
-        return false;
+
+        // Before the move, mark the current square as a wall (trail left behind)
+        Square current = grid.getSquare(x, y);
+        current.setWall(true);
+
+        // If the player can enter the new square, move there
+        if (next.canEnter(this)) {
+            next.tryLock(this);  // Lock the new square for the player
+            x = newX;  // Update the player's x-coordinate
+            y = newY;  // Update the player's y-coordinate
+            return true;  // Successful move
+        }
+
+        return false;  // Move failed
     }
 
     public void setX(int newX) {

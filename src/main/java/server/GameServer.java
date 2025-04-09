@@ -110,7 +110,7 @@ public class GameServer {
     public static synchronized void removePlayer(String playerId) {
         Player player = players.remove(playerId);
         if (player != null) {
-            grid.getSquare(player.getX(), player.getY()).unlock();
+            grid.getSquare(player.getX(), player.getY()).releaseLock();
         }
     }
 
@@ -282,7 +282,7 @@ public class GameServer {
         private void cleanup() {
             try {
                 if (player != null) {
-                    grid.getSquare(player.getX(), player.getY()).unlock();
+                    grid.getSquare(player.getX(), player.getY()).releaseLock();
                     synchronized (players) {
                         GameServer.removePlayer(player.getId());
                         broadcastLobbyState();

@@ -47,10 +47,9 @@ public class GameClient {
     }
 
     public void sendMove(int newX, int newY) {
-        if (playerId != null) {
-            out.println("MOVE," + playerId + "," + newX + "," + newY);
-        }
+        out.println("MOVE " + newX + " " + newY);
     }
+
 
     private void listenForMessages() {
         String message;

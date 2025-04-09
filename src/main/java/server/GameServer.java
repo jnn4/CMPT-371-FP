@@ -3,6 +3,7 @@ import main.java.model.Grid;
 import main.java.model.Player;
 import main.java.model.Square;
 
+import java.awt.*;
 import java.io.*;
 import java.net.*;
 import java.util.*;
@@ -247,7 +248,7 @@ public class GameServer {
                     int newY = Integer.parseInt(parts[2]);
 
                     if (GameServer.movePlayer(player.getId(), newX, newY)) {
-                        broadcast("PLAYER_MOVED," + player.getId() + " " + newX + " " + newY);
+                        broadcast("PLAYER_MOVED," + player.getId() + "," + newX + "," + newY + "," + player.getColor());
                     } else {
                         sendMessage("INVALID MOVE");
                     }

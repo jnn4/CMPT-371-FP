@@ -146,6 +146,17 @@ public class GameGUI extends JFrame {
         revalidate();
         repaint();
     }
+
+    private Color parseColor(String colorName) {
+        return switch (colorName.toUpperCase()) {
+            case "RED" -> Color.RED;
+            case "GREEN" -> Color.GREEN;
+            case "BLUE" -> Color.BLUE;
+            case "YELLOW" -> Color.YELLOW;
+            default -> Color.GRAY;
+        };
+    }
+
     public void addPlayer(String message) {
         SwingUtilities.invokeLater(() -> {
             String[] playerData = message.split(",");
@@ -161,10 +172,10 @@ public class GameGUI extends JFrame {
             if (this.localPlayer.getId().equals(playerId)) {
                 return;
             }
-            
+
             Player newPlayer = new Player(playerId, x, y, color);
             players.put(playerId, newPlayer);
-            trailColors.put(playerId, calculateTrailColor(Color.decode(color)));
+            trailColors.put(playerId, calculateTrailColor(parseColor(color)));
             updatePlayerPosition(newPlayer);
             revalidate();
             repaint();
@@ -253,8 +264,8 @@ public class GameGUI extends JFrame {
         if (grid != null) {
             int x = player.getX();
             int y = player.getY();
-            grid[y][x].setText("P"); // <- FIXED
-            grid[y][x].setBackground(Color.decode(player.getColor())); // <- FIXED
+            grid[y][x].setText("P"); // Player marker
+            grid[y][x].setBackground(parseColor(player.getColor())); // Updated to use parseColor method
         }
     }
 
@@ -269,18 +280,21 @@ public class GameGUI extends JFrame {
                 System.err.println("Invalid message format: " + message);
                 return;
             }
-            
-            // Messaged currently looks like: "playerId,newX,newY,color"
+
+            // Message looks like: "playerId,newX,newY,color"
             String playerId = parts[0];
             int newX = Integer.parseInt(parts[1]);
             int newY = Integer.parseInt(parts[2]);
-            String color = parts[3];
+            String colorName = parts[3];
+
+            // Convert color name to a Color object
+            Color color = parseColor(colorName);
 
             Player p = players.get(playerId);
             if (p == null) {
-                p = new Player(playerId, newX, newY, color);
+                p = new Player(playerId, newX, newY, colorName);
                 players.put(playerId, p);
-                trailColors.put(playerId, calculateTrailColor(Color.decode(color)));
+                trailColors.put(playerId, calculateTrailColor(color));
             } else {
                 int prevX = p.getX();
                 int prevY = p.getY();
@@ -293,13 +307,15 @@ public class GameGUI extends JFrame {
         });
     }
 
-    private Color calculateTrailColor(Color base) {
-        return new Color(
-                Math.max(base.getRed() - 50, 0),
-                Math.max(base.getGreen() - 50, 0),
-                Math.max(base.getBlue() - 50, 0)
-        );
+    private Color calculateTrailColor(Color baseColor) {
+        // Dim the brightness by reducing RGB components
+        int r = (int) (baseColor.getRed() * 0.5);
+        int g = (int) (baseColor.getGreen() * 0.5);
+        int b = (int) (baseColor.getBlue() * 0.5);
+
+        return new Color(r, g, b);
     }
+
 
     public GameClient getClient() {
         return client;

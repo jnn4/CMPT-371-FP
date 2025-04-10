@@ -1,26 +1,77 @@
 package main.java.client;
 
+import javax.swing.*;
 import java.io.*;
 import java.net.*;
 
+/**
+ * The GameClient class handles the network communication between the client and server
+ * for the multiplayer maze game. It manages connection establishment, message sending,
+ * and server message processing.
+ */
 public class GameClient {
+    // Network components
     private Socket socket;
     private PrintWriter out;
     private BufferedReader in;
-    private GameGUI gui; // Reference to update the UI
-    private String playerId;
 
-    public GameClient(String serverAddress, int port) {
+    // GUI reference and player state
+    private GameGUI gui;
+    private String playerId;
+    private volatile boolean guiReady = false;
+
+    /**
+     * Sets the GUI reference and marks it as ready for updates.
+     * @param gui The GameGUI instance to associate with this client
+     */
+    public void setGUI(GameGUI gui) {
+        this.gui = gui;
+        this.guiReady = true;
+        System.out.println("GUI reference set");
+    }
+
+    /**
+     * Main entry point for the client application.
+     * @param args Command line arguments (not used)
+     */
+    public static void main(String[] args) {
+        // Initialize GUI first with null client (temporarily)
+        GameGUI gui = new GameGUI(null);
+
+        // Create client instance with GUI reference
+        GameClient client = new GameClient("localhost", 12345, gui);
+
+        // Complete bidirectional connection
+        gui.setClient(client);
+        client.setGUI(gui);
+
+        System.out.println("Initialization complete");
+    }
+
+    /**
+     * Constructs a new GameClient and establishes server connection.
+     * @param serverAddress The server hostname/IP address
+     * @param port The server port number
+     * @param gui The associated GameGUI instance
+     */
+    public GameClient(String serverAddress, int port, GameGUI gui) {
+        this.gui = gui;
+        if (this.gui != null) {
+            this.guiReady = true;
+        }
+
         try {
+            // Establish network connection
             socket = new Socket(serverAddress, port);
             out = new PrintWriter(socket.getOutputStream(), true);
             in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
 
-            // Start a listener thread for server messages
+            // Start message listener thread
             new Thread(this::listenForMessages).start();
 
         } catch (ConnectException e) {
-            System.err.println("ERROR: Unable to connect to the server at " + serverAddress + ":" + port);
+            System.err.println("ERROR: Unable to connect to the server at " +
+                    serverAddress + ":" + port);
             System.err.println("Please make sure the server is running and try again.");
             System.exit(1);
         } catch (IOException e) {
@@ -30,103 +81,178 @@ public class GameClient {
         }
     }
 
-    public static void main(String[] args) {
-        GameClient client = new GameClient("localhost", 12345);
-        GameGUI gui = new GameGUI(client);
-        client.setGUI(gui);
-        client.sendMessage("INIT_STATE");
-    }
-
-
-    public void setGUI(GameGUI gui) {
-        this.gui = gui;  // Connect GUI with Client
-    }
-
+    /**
+     * Sends a generic message to the server.
+     * @param message The message to send
+     */
     public void sendMessage(String message) {
         out.println(message);
     }
 
+    /**
+     * Sends a move command to the server.
+     * @param newX The target X coordinate
+     * @param newY The target Y coordinate
+     */
     public void sendMove(int newX, int newY) {
-        if (playerId != null) {
-            out.println("MOVE," + playerId + "," + newX + "," + newY);
-        }
+        out.println("MOVE " + newX + " " + newY);
     }
 
+    /**
+     * Listens for incoming messages from the server and processes them.
+     * Runs in a separate thread to avoid blocking the main application.
+     */
     private void listenForMessages() {
         String message;
         try {
             while ((message = in.readLine()) != null) {
                 System.out.println("Server: " + message);
-
-                String[] parts = message.split(",");
-                String command = parts[0];
-
-                switch (command) {
-                    case "ASSIGN_PLAYER":
-                        playerId = message.split(",")[1];
-                        System.out.println("Player: " + playerId);
-                        break;
-                    case "LOBBY_STATE":
-                        if (gui != null) {
-                            gui.updateLobby(message.substring("LOBBY_STATE,".length()));
-                        }
-                        break;
-                    case "COUNTDOWN":
-                        try {
-                            int seconds = Integer.parseInt(parts[1]);
-                            if (gui != null) {
-                                gui.updateCountdown(seconds);
-                            }
-                        } catch (NumberFormatException e) {
-                            System.err.println("Invalid countdown value received from server.");
-                        }
-                        break;
-                    case "COUNTDOWN_ABORTED":
-                        if (gui != null) {
-                            gui.abortCountdown();
-                        }
-                        break;
-                    case "GAME_STARTED":
-                        if (gui != null) {
-                            gui.startGame();
-                        }
-                        break;
-                    case "PLAYER_JOINED":
-                        if (gui != null) {
-                            gui.addPlayer(message.substring("PLAYER_JOINED,".length()));
-                        }
-                        break;
-                    case "PLAYER_MOVED":
-                        if (gui != null) {
-                            gui.updateMaze(message.substring("PLAYER_MOVED,".length()));
-                        }
-                        break;
-                    case "PLAYER_LEFT":
-                        if (gui != null) {
-                            gui.removePlayer(message.substring("PLAYER_LEFT,".length()));
-                        }
-                        break;
-                    default:
-                        System.err.println("Unknown command from server: " + command);
-                        break;
-                }
+                processServerMessage(message);
             }
         } catch (SocketException e) {
-            System.err.println("ERROR: Connection to the server was lost.");
-            System.exit(1);
+            handleDisconnection("Connection to the server was lost.");
         } catch (IOException e) {
-            System.err.println("ERROR: I/O exception occurred while reading from the server.");
-            e.printStackTrace();
-            System.exit(1);
+            handleDisconnection("I/O exception occurred while reading from the server.");
         }
     }
 
-    // NOT USED ANYWHERE
-    // public void close() {
-    //     try {
-    //         if (socket != null) socket.close();
-    //     } catch (IOException e) {
-    //         e.printStackTrace();
-    //     }
-    // }
+    /**
+     * Processes a single message received from the server.
+     * @param message The raw message from the server
+     */
+    private void processServerMessage(String message) {
+        String[] parts = message.split(",");
+        String command = parts[0];
+
+        // Handle different server commands
+        switch (command) {
+            case "ASSIGN_PLAYER":
+                handlePlayerAssignment(parts);
+                break;
+
+            case "LOBBY_STATE":
+                if (gui != null) {
+                    gui.updateLobby(message.substring("LOBBY_STATE,".length()));
+                }
+                break;
+
+            case "COUNTDOWN":
+                handleCountdown(parts);
+                break;
+
+            case "COUNTDOWN_ABORTED":
+                if (gui != null) {
+                    gui.abortCountdown();
+                }
+                break;
+
+            case "GAME_STARTED":
+                SwingUtilities.invokeLater(() -> {
+                    if (gui != null && playerId == null) {
+                        System.err.println("Game started but player ID not assigned!");
+                        return;
+                    }
+                    gui.startGame();
+                });
+                break;
+
+            case "PLAYER_JOINED":
+                handlePlayerJoined(message, parts);
+                break;
+
+            case "PLAYER_MOVED":
+                if (gui != null) {
+                    gui.updateMaze(message.substring("PLAYER_MOVED,".length()));
+                }
+                break;
+
+            case "PLAYER_LEFT":
+                if (gui != null) {
+                    gui.removePlayer(message.substring("PLAYER_LEFT,".length()));
+                }
+                break;
+
+            case "MOVE_CONFIRMED":
+                if (gui != null && parts.length >= 4) {
+                    String confirmedPlayerId = parts[1];
+                    int newX = Integer.parseInt(parts[2]);
+                    int newY = Integer.parseInt(parts[3]);
+                    gui.onMoveConfirmed(confirmedPlayerId, newX, newY);
+                }
+                break;
+
+            default:
+                System.err.println("Unknown command from server: " + command);
+                break;
+        }
+    }
+
+    /**
+     * Handles player assignment message from server.
+     * @param parts The parsed message parts
+     */
+    private void handlePlayerAssignment(String[] parts) {
+        playerId = parts[1];
+        int x = Integer.parseInt(parts[2]);
+        int y = Integer.parseInt(parts[3]);
+        String color = parts[4];
+        System.out.println("Assigned player ID: " + playerId);
+
+        SwingUtilities.invokeLater(() -> {
+            if (gui != null) {
+                gui.setLocalPlayer(playerId, x, y, color);
+                System.out.println("Local player initialized at " + x + "," + y);
+            }
+        });
+    }
+
+    /**
+     * Handles countdown messages from server.
+     * @param parts The parsed message parts
+     */
+    private void handleCountdown(String[] parts) {
+        try {
+            int seconds = Integer.parseInt(parts[1]);
+            if (gui != null) {
+                gui.updateCountdown(seconds);
+            }
+        } catch (NumberFormatException e) {
+            System.err.println("Invalid countdown value received from server.");
+        }
+    }
+
+    /**
+     * Handles player join notifications from server.
+     * @param message The raw message
+     * @param parts The parsed message parts
+     */
+    private void handlePlayerJoined(String message, String[] parts) {
+        System.out.println("[CLIENT] Received PLAYER_JOINED: " + message);
+        // Skip our own join message
+        if (!parts[1].equals(playerId)) {
+            String finalMessage = message;
+            SwingUtilities.invokeLater(() -> {
+                if (gui != null) {
+                    gui.addPlayer(finalMessage.substring("PLAYER_JOINED,".length()));
+                }
+            });
+        }
+    }
+
+    /**
+     * Handles server disconnection events.
+     * @param errorMessage The disconnection reason
+     */
+    private void handleDisconnection(String errorMessage) {
+        System.err.println("ERROR: " + errorMessage);
+        SwingUtilities.invokeLater(() -> {
+            if (gui != null) {
+                JOptionPane.showMessageDialog(gui,
+                        "Connection to server lost: " + errorMessage,
+                        "Connection Error",
+                        JOptionPane.ERROR_MESSAGE);
+            }
+        });
+        System.exit(1);
+    }
 }

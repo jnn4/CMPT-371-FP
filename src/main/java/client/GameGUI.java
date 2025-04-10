@@ -59,12 +59,12 @@ public class GameGUI extends JFrame {
      */
     public void setLocalPlayer(String id, int x, int y, String color) {
         synchronized(playerLock) {
-            System.out.println("Setting local player: " + id);
+            // System.out.println("Setting local player: " + id);
             try {
                 this.localPlayer = new Player(id, x, y, color);
                 players.put(id, this.localPlayer);
                 trailColors.put(id, calculateTrailColor(Color.decode(color)));
-                System.out.println("Local player set successfully: " + localPlayer);
+                // System.out.println("Local player set successfully: " + localPlayer);
             } catch (Exception e) {
                 System.err.println("Error setting local player: ");
                 e.printStackTrace();
@@ -401,7 +401,7 @@ public class GameGUI extends JFrame {
     public void addPlayer(String message) {
         SwingUtilities.invokeLater(() -> {
             try {
-                System.out.println("Adding player: " + message);
+                // System.out.println("Adding player: " + message);
                 String[] playerData = message.split(",");
                 if (playerData.length != 4) {
                     System.err.println("Invalid player data: " + message);

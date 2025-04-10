@@ -144,15 +144,16 @@ public class ClientHandler implements Runnable, Observer {
      * @param message The message received from the client.
      */
     private void handleClientMessage(String message) {
-        String[] parts = message.split(" ");
+        String[] parts = message.split(",");
         switch (parts[0]) {
             case "MOVE":
                 int newX = Integer.parseInt(parts[1]);
                 int newY = Integer.parseInt(parts[2]);
                 if (gameServer.movePlayer(player.getId(), newX, newY)) {
                     gameServer.broadcast("PLAYER_MOVED," + player.getId() + "," + newX + "," + newY + "," + player.getColor());
+                    sendMessage("MOVE_CONFIRMED," + player.getId() + "," + newX + "," + newY);
                 } else {
-                    sendMessage("INVALID MOVE");
+                    sendMessage("INVALID_MOVE");
                 }
                 break;
 
@@ -172,7 +173,7 @@ public class ClientHandler implements Runnable, Observer {
                 break;
 
             default:
-                sendMessage("UNKNOWN COMMAND");
+                sendMessage("UNKNOWN_COMMAND");
         }
     }
 

@@ -91,16 +91,16 @@ public class Square {
             if (lock.tryLock(LOCK_TIMEOUT_MS, TimeUnit.MILLISECONDS)) {
                 owner = player;
                 updateLabelForLock(player);
-                System.out.printf("Square at [%d,%d] locked by %s%n",
-                        getX(), getY(), player.getId());
+                // System.out.printf("Square at [%d,%d] locked by %s%n",
+                        // getX(), getY(), player.getId());
                 return true;
             }
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
         }
 
-        System.out.printf("Failed to lock square at [%d,%d] (locked by %s)%n",
-                getX(), getY(), (owner != null ? owner.getId() : "unknown"));
+        // System.out.printf("Failed to lock square at [%d,%d] (locked by %s)%n",
+                // getX(), getY(), (owner != null ? owner.getId() : "unknown"));
         return false;
     }
 

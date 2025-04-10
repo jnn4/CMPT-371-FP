@@ -9,19 +9,46 @@ import java.net.Socket;
  * Handles communication with an individual game client.
  * This class is responsible for assigning players, processing client commands,
  * sending and receiving messages, and broadcasting game state updates.
+ *
+ * The ClientHandler also implements the Observer interface to receive updates from the GameServer.
+ * This decouples the ClientHandler's responsibilities from the GameServer's core logic,
+ * allowing for more flexible and maintainable code. The ClientHandler listens for changes in the game
+ * state and reacts accordingly by sending updates to the client.
  */
-public class ClientHandler implements Runnable {
+public class ClientHandler implements Runnable, Observer {
+    private final GameServerInterface gameServer;
     private final Socket socket;
     private PrintWriter out;
     private Player player;
 
     /**
+     * This method is called when the observed GameServer sends an update.
+     * It handles the game server's broadcast messages and sends them to the client.
+     *
+     * The ClientHandler listens for updates from the GameServer and ensures that the client is kept in sync
+     * with the game state (e.g., game status, player actions, etc.).
+     *
+     * @param message The message received from the game server to be sent to the client.
+     */
+    @Override
+    public void update(String message) {
+        sendMessage(message);
+    }
+
+    /**
      * Constructor for creating a new ClientHandler.
      *
+     * This constructor initializes the ClientHandler with a connection to the game server and the client socket.
+     * It also registers the ClientHandler as an observer of the game server to receive updates regarding
+     * game state changes (e.g., player movements, game status updates, etc.).
+     *
+     * @param gameServer The game server instance that the ClientHandler will observe for game state changes.
      * @param socket The socket connection to the client.
      */
-    public ClientHandler(Socket socket) {
+    public ClientHandler(GameServerInterface gameServer, Socket socket) {
+        this.gameServer = gameServer;
         this.socket = socket;
+        gameServer.addObserver(this);  // Register itself as an observer
     }
 
     /**
@@ -45,25 +72,25 @@ public class ClientHandler implements Runnable {
             out = new PrintWriter(socket.getOutputStream(), true);
 
             // Check if the server has space for more players
-            if (GameServer.getPlayerCount() > GameServer.getMaxPlayers()) {
+            if (gameServer.getPlayerCount() > gameServer.getMaxPlayers()) {
                 sendMessage("SERVER_FULL");
                 socket.close();
                 return;
             }
 
             // Assign a player ID and position, then initialize the player
-            String playerId = "P" + GameServer.getNextPlayerId();
+            String playerId = "P" + gameServer.getNextPlayerId();
             int[] startPos = getCornerPosition(playerId);
             String playerColor = getCornerColor(playerId);
             this.player = new Player(playerId, startPos[0], startPos[1], playerColor);
 
             // Add player to the game and lock the initial position
-            GameServer.addPlayer(player);
-            GameServer.getGrid().getSquare(startPos[0], startPos[1]).tryLock(player);
+            gameServer.addPlayer(player);
+            gameServer.getGrid().getSquare(startPos[0], startPos[1]).tryLock(player);
 
             // Send player assignment and broadcast player join
             sendMessage("ASSIGN_PLAYER," + playerId + "," + startPos[0] + "," + startPos[1] + "," + playerColor);
-            GameServer.broadcast("PLAYER_JOINED," + playerId + "," + startPos[0] + "," + startPos[1] + "," + playerColor);
+            gameServer.broadcast("PLAYER_JOINED," + playerId + "," + startPos[0] + "," + startPos[1] + "," + playerColor);
 
             // Continuously read and process messages from the client
             String message;
@@ -85,7 +112,7 @@ public class ClientHandler implements Runnable {
      * @return An array of two integers, [x, y], representing the starting position.
      */
     private int[] getCornerPosition(String playerId) {
-        int maxPos = GameServer.getGrid().getSize() - 1;
+        int maxPos = gameServer.getGrid().getSize() - 1;
         return switch (playerId) {
             case "P1" -> new int[]{0, 0};
             case "P2" -> new int[]{maxPos, 0};
@@ -122,8 +149,8 @@ public class ClientHandler implements Runnable {
             case "MOVE":
                 int newX = Integer.parseInt(parts[1]);
                 int newY = Integer.parseInt(parts[2]);
-                if (GameServer.movePlayer(player.getId(), newX, newY)) {
-                    GameServer.broadcast("PLAYER_MOVED," + player.getId() + "," + newX + "," + newY + "," + player.getColor());
+                if (gameServer.movePlayer(player.getId(), newX, newY)) {
+                    gameServer.broadcast("PLAYER_MOVED," + player.getId() + "," + newX + "," + newY + "," + player.getColor());
                 } else {
                     sendMessage("INVALID MOVE");
                 }
@@ -152,15 +179,15 @@ public class ClientHandler implements Runnable {
     /**
      * Broadcasts the current lobby state to all clients, including each player's readiness status.
      */
-    static void broadcastLobbyState() {
+    void broadcastLobbyState() {
         StringBuilder lobbyState = new StringBuilder("LOBBY_STATE,");
-        for (Player player : GameServer.getPlayers().values()) {
+        for (Player player : gameServer.getPlayers().values()) {
             lobbyState.append(player.getId())
                     .append(",")
                     .append(player.getReady() ? "READY" : "NOT_READY")
                     .append(";");
         }
-        GameServer.broadcast(lobbyState.toString());
+        gameServer.broadcast(lobbyState.toString());
     }
 
     /**
@@ -168,8 +195,8 @@ public class ClientHandler implements Runnable {
      *
      * @return true if all players are ready, false otherwise.
      */
-    private static boolean allPlayersReady() {
-        for (Player player : GameServer.getPlayers().values()) {
+    private boolean allPlayersReady() {
+        for (Player player : gameServer.getPlayers().values()) {
             if (!player.getReady()) return false;
         }
         return true;
@@ -178,40 +205,48 @@ public class ClientHandler implements Runnable {
     /**
      * Starts the game countdown, notifying all players every second, and begins the game when all players are ready.
      */
-    private static void startGameCountdown() {
+    private void startGameCountdown() {
         for (int i = 3; i > 0; i--) {
             if (!allPlayersReady()) {
-                GameServer.broadcast("COUNTDOWN_ABORTED");
+                gameServer.broadcast("COUNTDOWN_ABORTED");
                 broadcastLobbyState();
                 return;
             }
-            GameServer.broadcast("COUNTDOWN," + i);
+            gameServer.broadcast("COUNTDOWN," + i);
             try {
                 Thread.sleep(1000);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
         }
-        GameServer.broadcast("GAME_STARTED");
+        gameServer.broadcast("GAME_STARTED");
     }
 
     /**
      * Cleans up resources when the client disconnects, including releasing locks, updating game state,
      * broadcasting the player's departure, and closing the socket connection.
+     *
+     * This method also unregisters the ClientHandler as an observer of the GameServer to stop receiving
+     * updates once the client disconnects.
      */
     private void cleanup() {
         try {
             if (player != null) {
-                GameServer.getGrid().getSquare(player.getX(), player.getY()).releaseLock();
-                GameServer.removePlayer(player.getId());
+                gameServer.removeObserver(this);
+                gameServer.getGrid().getSquare(player.getX(), player.getY()).releaseLock();
+                gameServer.removePlayer(player.getId());
                 broadcastLobbyState();
-                GameServer.broadcast("PLAYER_LEFT," + player.getId());
+                gameServer.broadcast("PLAYER_LEFT," + player.getId());
             }
 
-            GameServer.removeClient(this);
+            gameServer.removeClient(this);
             socket.close();
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    public String getPlayerId() {
+        return player.getId();
     }
 }

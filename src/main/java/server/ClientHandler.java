@@ -130,10 +130,10 @@ public class ClientHandler implements Runnable, Observer {
      */
     private String getCornerColor(String playerId) {
         return switch (playerId) {
-            case "P1" -> "#FF0000";
-            case "P2" -> "#00FF00";
-            case "P3" -> "#0000FF";
-            case "P4" -> "#FFFF00";
+            case "P1" -> "#f0adc6";
+            case "P2" -> "#a7c1e9";
+            case "P3" -> "#feeaa7";
+            case "P4" -> "#b3f4bb";
             default -> throw new IllegalStateException("Unexpected player ID: " + playerId);
         };
     }

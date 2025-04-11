@@ -44,8 +44,10 @@ public class GameGUI extends JFrame {
     private JLabel[][] gridLabels; // Visual representation of the grid
     private Square[][] gridSquares; // Logical representation of grid squares
     private Player localPlayer; // The player associated with this client
+    private ImageIcon characterIcon; // Image icon object for the player sprite
     private GameClient client; // Reference to the network client
     private final Map<String, Player> players = new HashMap<>(); // All players in the game
+    private final Map<String, ImageIcon> playerSprites = new HashMap<>(); // Player sprites corresponding to player IDs
     private final Map<String, Color> trailColors = new HashMap<>(); // Player trail colors
 
     /**
@@ -80,6 +82,10 @@ public class GameGUI extends JFrame {
                 this.localPlayer = new Player(id, x, y, color);
                 players.put(id, this.localPlayer);
                 trailColors.put(id, calculateTrailColor(Color.decode(color)));
+                playerSprites.put("P1", new ImageIcon("../../resources/images/sprites/p1.png"));
+                playerSprites.put("P2", new ImageIcon("../../resources/images/sprites/p2.png"));
+                playerSprites.put("P3", new ImageIcon("../../resources/images/sprites/p3.png"));
+                playerSprites.put("P4", new ImageIcon("../../resources/images/sprites/p4.png"));
                 // System.out.println("Local player set successfully: " + localPlayer);
             } catch (Exception e) {
                 System.err.println("Error setting local player: ");
@@ -336,6 +342,17 @@ public class GameGUI extends JFrame {
             return;
         }
 
+        // Set sprite image for corresponding player ID
+        switch(localPlayer.getId()){
+            case "P1":
+                characterIcon = new ImageIcon("../../resources/images/sprites/p1.png");
+                break;
+            default:
+                characterIcon = null;
+                break;
+    
+        }
+
         // getContentPane().removeAll();
         // setLayout(new GridLayout(GRID_SIZE, GRID_SIZE));
         JPanel gridPanel = new JPanel(new GridLayout(GRID_SIZE, GRID_SIZE));
@@ -477,8 +494,8 @@ public class GameGUI extends JFrame {
      */
     private void updateTrail(int x, int y, String playerId) {
         if (gridLabels != null) {
-            gridLabels[y][x].setText(""); // Clear previous trail
             gridLabels[y][x].setBackground(trailColors.get(playerId)); // Set the trail color
+            gridLabels[y][x].setIcon(null); // Clear previous trail
         }
     }
 
@@ -492,8 +509,8 @@ public class GameGUI extends JFrame {
         if (gridLabels != null) {
             int x = player.getX();
             int y = player.getY();
-            gridLabels[y][x].setText("P"); // Player marker
             gridLabels[y][x].setBackground(parseColor(player.getColor())); // Update background color
+            gridLabels[y][x].setIcon(playerSprites.get(player.getId())); // Player sprite
         }
     }
 
@@ -579,9 +596,9 @@ public class GameGUI extends JFrame {
      */
     private Color calculateTrailColor(Color baseColor) {
         // Dim the brightness by reducing RGB components
-        int r = (int) (baseColor.getRed() * 0.5);
-        int g = (int) (baseColor.getGreen() * 0.5);
-        int b = (int) (baseColor.getBlue() * 0.5);
+        int r = (int) (baseColor.getRed());
+        int g = (int) (baseColor.getGreen());
+        int b = (int) (baseColor.getBlue());
 
         return new Color(r, g, b);
     }

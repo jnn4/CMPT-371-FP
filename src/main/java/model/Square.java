@@ -38,7 +38,7 @@ public class Square {
      */
     public synchronized void clearSquare() {
         SwingUtilities.invokeLater(() -> {
-            label.setText(" ");
+            label.setText("");
             label.setBackground(null);
         });
     }
@@ -129,7 +129,7 @@ public class Square {
      */
     private void updateLabelForLock(Player player) {
         SwingUtilities.invokeLater(() -> {
-            label.setText("L:" + player.getId());
+            // label.setText("L:" + player.getId());
             label.setBorder(BorderFactory.createLineBorder(Color.WHITE, 2));
         });
     }

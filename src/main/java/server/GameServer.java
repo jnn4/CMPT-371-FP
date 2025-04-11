@@ -267,7 +267,8 @@ public class GameServer implements GameServerInterface {
         boolean allClaimed = true;
         for (int i = 0; i < grid.getSize(); i++) {
             for (int j = 0; j < grid.getSize(); j++) {
-                if (grid.getSquare(i, j).getOwner() == null) {
+                Square square = grid.getSquare(i, j);
+                if (!square.isWall() && square.getOwner() == null) {
                     allClaimed = false;
                     break;
                 }

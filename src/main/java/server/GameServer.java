@@ -30,7 +30,7 @@ import java.util.concurrent.TimeUnit;
 public class GameServer implements GameServerInterface {
     private static final int PORT = 12345;
     private static final Grid grid = new Grid(10);
-    private static final int GAME_DURATION_SECONDS = 60;
+    private static final int GAME_DURATION_SECONDS = 30;
     private static final Set<ClientHandler> clients = new HashSet<>();
     private static final Map<String, Player> players = new HashMap<>();
     private static final AtomicInteger playerCounter = new AtomicInteger(1);

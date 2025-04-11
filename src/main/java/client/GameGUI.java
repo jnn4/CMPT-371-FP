@@ -336,8 +336,10 @@ public class GameGUI extends JFrame {
             return;
         }
 
-        getContentPane().removeAll();
-        setLayout(new GridLayout(GRID_SIZE, GRID_SIZE));
+        // getContentPane().removeAll();
+        // setLayout(new GridLayout(GRID_SIZE, GRID_SIZE));
+        JPanel gridPanel = new JPanel(new GridLayout(GRID_SIZE, GRID_SIZE));
+        gridPanel.setPreferredSize(new Dimension(800, 800));
 
         // Initialize game grid
         gridLabels = new JLabel[GRID_SIZE][GRID_SIZE];
@@ -353,7 +355,8 @@ public class GameGUI extends JFrame {
                 gridSquares[row][col].tryLock(localPlayer);
                 gridSquares[row][col].setWall(false);
 
-                add(gridLabels[row][col]);
+                // add(gridLabels[row][col]);
+                gridPanel.add(gridLabels[row][col]);
             }
         }
         
@@ -364,6 +367,48 @@ public class GameGUI extends JFrame {
             gridSquares[player.getY()][player.getX()].tryLock(player);
         }
 
+        gridPanel.setBounds(1000, 100, 800, 800);
+        lobbyPanel.add(gridPanel, JLayeredPane.DEFAULT_LAYER);
+
+        // Create a Timer to make the background and grid scroll
+        Timer timer = new Timer(5, new ActionListener() {
+            int xPosition = 0;  // Position of the background image and grid panel
+            int speed = 10; // Initial speed of scrolling
+        
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                // Scroll the background, grid, and labels
+                if (xPosition <= -900) {
+                    xPosition = -900;
+                    // Remove components after reaching target position
+                    for (Component comp : lobbyPanel.getComponentsInLayer(JLayeredPane.PALETTE_LAYER)) {
+                        lobbyPanel.remove(comp);
+                    }
+                    lobbyPanel.remove(howToPlayLabel);
+                    lobbyPanel.remove(playersContainerLabel);
+                } else {
+                    // Gradually decrease the speed as the position moves
+                    if (xPosition <= -800) {
+                        speed = 5; // Slow down when nearing the end
+                    }
+                    xPosition -= speed; 
+                }
+
+                // Set new bounds for the background and grid
+                lobbyBackground.setBounds(xPosition, 0, 2065, 1000);
+                gridPanel.setBounds(xPosition + 1000, 100, 800, 800); 
+                howToPlayLabel.setBounds(xPosition + 200, 100, 604, 207); 
+                playersContainerLabel.setBounds(xPosition + 500, 512, 382, 355);
+                instructions.setBounds(xPosition + 100, 265, 870, 170);
+                controls.setBounds(xPosition + 137, 512, 253, 246);
+                countdownLabel.setBounds(xPosition + 530, 800, 370, 50);
+                playerListScrollPane.setBounds(xPosition + 550, 600, 300, 100);
+                readyButton.setBounds(xPosition + 550, 700, 300, 50);
+            }
+        });
+
+        timer.start();
+        
         revalidate();
         repaint();
         requestFocusInWindow();

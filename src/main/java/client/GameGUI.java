@@ -78,7 +78,7 @@ public class GameGUI extends JFrame {
      */
     public GameGUI(GameClient client) {
         this.client = client;
-        setTitle("Multiplayer Maze Game");
+        setTitle("Onigiri Wars");
         setSize(WINDOW_SIZE, WINDOW_SIZE);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLayout(new GridLayout(GRID_SIZE, GRID_SIZE));
@@ -212,10 +212,12 @@ public class GameGUI extends JFrame {
                 add(gridLabels[row][col]);
             }
         }
-
+        
+        client.sendMessage("INIT_STATE");
         // Update all player positions
         for (Player player : players.values()) {
             updatePlayerPosition(player);
+            gridSquares[player.getY()][player.getX()].tryLock(player);
         }
 
         revalidate();
@@ -373,6 +375,9 @@ public class GameGUI extends JFrame {
             }
 
             updatePlayerPosition(p);
+            if (gridSquares != null) {
+                gridSquares[newY][newX].tryLock(p);
+            }
         });
     }
 

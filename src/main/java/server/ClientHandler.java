@@ -157,10 +157,6 @@ public class ClientHandler implements Runnable, Observer {
                 }
                 break;
 
-            case "INIT_STATE":
-                broadcastLobbyState();
-                break;
-
             case "READY":
                 player.toggleReady();
                 broadcastLobbyState();
@@ -170,6 +166,10 @@ public class ClientHandler implements Runnable, Observer {
             case "UNREADY":
                 player.toggleReady();
                 broadcastLobbyState();
+                break;
+            
+            case "INIT_STATE":
+                broadcastAllPlayerPositions();
                 break;
 
             default:
@@ -204,6 +204,15 @@ public class ClientHandler implements Runnable, Observer {
     }
 
     /**
+     * Broadcasts the positions of all players to all clients.
+     */
+    private void broadcastAllPlayerPositions() {
+        for (Player p : gameServer.getPlayers().values()) {
+            gameServer.broadcast("PLAYER_MOVED," + p.getId() + "," + p.getX() + "," + p.getY() + "," + p.getColor());
+        }
+    }
+
+    /**
      * Starts the game countdown, notifying all players every second, and begins the game when all players are ready.
      */
     private void startGameCountdown() {
@@ -221,6 +230,7 @@ public class ClientHandler implements Runnable, Observer {
             }
         }
         gameServer.broadcast("GAME_STARTED");
+        broadcastAllPlayerPositions();
         gameServer.startGameTimer();
     }
 

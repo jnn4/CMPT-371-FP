@@ -351,7 +351,7 @@ public class GameGUI extends JFrame {
             
             Player newPlayer = new Player(playerId, x, y, color);
             players.put(playerId, newPlayer);
-            trailColors.put(playerId, calculateTrailColor(Color.decode(color)));
+            trailColors.put(playerId, calculateTrailColor(Color.decode(color))); 
             updatePlayerPosition(newPlayer);
             revalidate();
             repaint();
@@ -417,13 +417,13 @@ public class GameGUI extends JFrame {
 
     private void attemptMove(int newX, int newY) {
         if (isValidMove(newX, newY)) {
-            int oldX = localPlayer.getX();
-            int oldY = localPlayer.getY();
-            localPlayer.setX(newX);
-            localPlayer.setY(newY);
+            // int oldX = localPlayer.getX();
+            // int oldY = localPlayer.getY();
+            // localPlayer.setX(newX);
+            // localPlayer.setY(newY);
 
-            updateTrail(oldX, oldY, localPlayer.getId());
-            updatePlayerPosition(localPlayer);
+            // updateTrail(oldX, oldY, localPlayer.getId());
+            // updatePlayerPosition(localPlayer);
 
             client.sendMove(newX, newY); // Send move to server
         }
@@ -447,7 +447,7 @@ public class GameGUI extends JFrame {
         }
     }
 
-    private boolean isValidMove(int x, int y) {
+    private boolean isValidMove(int x, int y){
         return x >= 0 && x < GRID_SIZE && y >= 0 && y < GRID_SIZE;
     }
 
@@ -458,7 +458,7 @@ public class GameGUI extends JFrame {
                 System.err.println("Invalid message format: " + message);
                 return;
             }
-            
+
             // Messaged currently looks like: "playerId,newX,newY,color"
             String playerId = parts[0];
             int newX = Integer.parseInt(parts[1]);
@@ -471,11 +471,20 @@ public class GameGUI extends JFrame {
                 players.put(playerId, p);
                 trailColors.put(playerId, calculateTrailColor(Color.decode(color)));
             } else {
-                int prevX = p.getX();
-                int prevY = p.getY();
-                updateTrail(prevX, prevY, playerId);
-                p.setX(newX);
-                p.setY(newY);
+                // int prevX = p.getX();
+                // int prevY = p.getY();
+                // updateTrail(prevX, prevY, playerId);
+                // p.setX(newX);
+                // p.setY(newY);
+
+                int oldX = localPlayer.getX();
+                int oldY = localPlayer.getY();
+                localPlayer.setX(newX);
+                localPlayer.setY(newY);
+
+                updateTrail(oldX, oldY, localPlayer.getId());
+                updatePlayerPosition(localPlayer);
+
             }
 
             updatePlayerPosition(p);

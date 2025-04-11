@@ -37,9 +37,8 @@ public class GameClient {
         client.sendMessage("INIT_STATE");
     }
 
-
     public void setGUI(GameGUI gui) {
-        this.gui = gui;  // Connect GUI with Client
+        this.gui = gui; // Connect GUI with Client
     }
 
     public void sendMessage(String message) {
@@ -64,7 +63,7 @@ public class GameClient {
                 switch (command) {
                     case "ASSIGN_PLAYER":
                         playerId = message.split(",")[1];
-                        System.out.println("Player: " + playerId);
+                        // System.out.println("Player: " + playerId);
                         break;
                     case "LOBBY_STATE":
                         if (gui != null) {
@@ -123,10 +122,10 @@ public class GameClient {
 
     // NOT USED ANYWHERE
     // public void close() {
-    //     try {
-    //         if (socket != null) socket.close();
-    //     } catch (IOException e) {
-    //         e.printStackTrace();
-    //     }
+    // try {
+    // if (socket != null) socket.close();
+    // } catch (IOException e) {
+    // e.printStackTrace();
+    // }
     // }
 }

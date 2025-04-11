@@ -143,6 +143,7 @@ public class GameServer {
 
                 // Assign unique player ID and color
                 String playerId = "P" + playerCounter.getAndIncrement();
+                broadcast("ASSIGN_PLAYER," + playerId);
                 int startX, startY;
                 switch (playerId) {
                     case "P1":
@@ -167,10 +168,10 @@ public class GameServer {
                         startY = (grid.getSize() - 1) / 2;
                 }
                 String playerColor = switch (playerId) {
-                    case "P1" -> "RED";
-                    case "P2" -> "GREEN";
-                    case "P3" -> "BLUE";
-                    default -> "YELLOW";
+                    case "P1" -> "#F0ADC6";
+                    case "P2" -> "#FEEAA7";
+                    case "P3" -> "#A7C1E9";
+                    default -> "#B3F4BB";
                 };
 
                 player = new Player(playerId, startX, startY, playerColor);
@@ -240,14 +241,14 @@ public class GameServer {
 
         // Handle messages from the clients
         private void handleClientMessage(String message) {
-            String[] parts = message.split(" ");
+            String[] parts = message.split(",");
             switch (parts[0]) {
                 case "MOVE":
-                    int newX = Integer.parseInt(parts[1]);
-                    int newY = Integer.parseInt(parts[2]);
+                    int newX = Integer.parseInt(parts[2]);
+                    int newY = Integer.parseInt(parts[3]);
 
                     if (GameServer.movePlayer(player.getId(), newX, newY)) {
-                        broadcast("PLAYER_MOVED," + player.getId() + " " + newX + " " + newY);
+                        broadcast("PLAYER_MOVED," + player.getId() + "," + newX + "," + newY + "," + player.getColor());
                     } else {
                         sendMessage("INVALID MOVE");
                     }

@@ -50,6 +50,10 @@ public class GameGUI extends JFrame {
     private final Map<String, ImageIcon> playerSprites = new HashMap<>(); // Player sprites corresponding to player IDs
     private final Map<String, Color> trailColors = new HashMap<>(); // Player trail colors
 
+    // Post Game UI components
+    private JLabel gameOverPanel;
+    private JLabel scoreboard;
+
     /**
      * Parses a color name string into a Color object.
      * @param colorName The name of the color (RED, GREEN, BLUE, YELLOW)
@@ -713,32 +717,54 @@ public class GameGUI extends JFrame {
     public void showGameOver(String winnerId, int winnerScore, String allScores) {
         SwingUtilities.invokeLater(() -> {
             try {
-                String scoreDisplay = "Game Over!\n\n";
-                scoreDisplay += "Winner: " + winnerId + " with " + winnerScore + " squares!\n\n";
+                gameOverPanel = new JLabel(new ImageIcon("../../resources/images/game_over.png"));
+                gameOverPanel.setBounds(130, 45, 730,830);
+                layeredPane.add(gameOverPanel, JLayeredPane.POPUP_LAYER);
+
+                String scoreDisplay = "";
                 
-                // format: "playerId:score;playerId:score;..."
-                scoreDisplay += "Scoreboard:\n";
+                JLabel winnerText = null;
+                switch(winnerId){
+                    case "P1":
+                        winnerText = new JLabel(new ImageIcon("../../resources/images/p1_win.png"));
+                        break;
+                    case "P2":
+                        winnerText = new JLabel(new ImageIcon("../../resources/images/p2_win.png"));
+                        break;
+                    case "P3":
+                        winnerText = new JLabel(new ImageIcon("../../resources/images/p3_win.png"));
+                        break;
+                    case "P4":
+                        winnerText = new JLabel(new ImageIcon("../../resources/images/p4_win.png"));
+                        break;
+                }
+
+                winnerText.setBounds(280, 300, 450, 130);
+                layeredPane.add(winnerText, JLayeredPane.POPUP_LAYER);
+                layeredPane.moveToFront(winnerText);
+
+                // Build the scoreboard HTML from allScores
+                StringBuilder scoreHtml = new StringBuilder("<html>");
                 if (allScores != null && !allScores.isEmpty()) {
                     String[] playerScorePair = allScores.split(";");
                     for (String playerScore : playerScorePair) {
                         if (!playerScore.isEmpty()) {
                             String[] parts = playerScore.split(":");
                             if (parts.length == 2) {
-                                scoreDisplay += parts[0] + ": " + parts[1] + " squares\n";
+                                scoreHtml.append(parts[0]).append(": ").append(parts[1]).append(" TILES<br>");
                             }
                         }
                     }
                 }
-                
-                JOptionPane.showMessageDialog(
-                    this,
-                    scoreDisplay,
-                    "Game Over",
-                    JOptionPane.INFORMATION_MESSAGE
-                );
-                
-                // Exit application when OK is clicked
-                System.exit(0);
+                scoreHtml.append("</html>");
+                scoreboard = new JLabel(scoreHtml.toString());
+                scoreboard.setFont(fontInkyThinPixelsLarge);
+                scoreboard.setForeground(new Color(255,255,255));
+                scoreboard.setSize(520, Short.MAX_VALUE);  // Set desired width
+                Dimension preferred = scoreboard.getPreferredSize();
+                scoreboard.setBounds(250, 580, 520, preferred.height); // Add the text label to the layered pane
+                layeredPane.add(scoreboard, JLayeredPane.POPUP_LAYER);
+                layeredPane.moveToFront(scoreboard);
                 
             } catch (Exception e) {
                 System.err.println("Error showing dialog: " + e.getMessage());

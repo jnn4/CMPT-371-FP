@@ -34,6 +34,7 @@ public class GameGUI extends JFrame {
     private JLabel instructions;
     private JLabel controls;
     private JLabel playersContainerLabel;
+    private JLabel playerListText;
     private JLabel countdownLabel;
     private DefaultListModel<String> playerListModel;
     private JList<String> playerList;
@@ -226,7 +227,7 @@ public class GameGUI extends JFrame {
             countdownLabel = new JLabel("WAITING FOR PLAYERS...");
             countdownLabel.setFont(fontInkyThinPixelsBase);
             countdownLabel.setForeground(new Color(41,50,65));
-            countdownLabel.setBounds(530, 800, 370, 50);
+            countdownLabel.setBounds(540, 800, 370, 50);
             lobbyPanel.add(countdownLabel, JLayeredPane.PALETTE_LAYER);
 
         } catch (FontFormatException | IOException e) {
@@ -257,21 +258,23 @@ public class GameGUI extends JFrame {
         lobbyPanel.add(playersContainerLabel, JLayeredPane.DEFAULT_LAYER);
 
         // Player list in the center
-        playerListModel = new DefaultListModel<>();
-        playerList = new JList<>(playerListModel);
-        playerList.setVisibleRowCount(4);
-        playerList.setFixedCellHeight(20);
+        // Create a JLabel for the player list text
+        playerListText = new JLabel("<html></html>");
+        playerListText.setFont(fontInkyThinPixelsBase);
+        playerListText.setForeground(new Color(41, 50, 65));
+        playerListText.setBounds(540, 475, 305, 300);
 
-        playerListScrollPane = new JScrollPane(playerList);
-
-        playerListScrollPane.setPreferredSize(new Dimension(200, 150));
-        playerListScrollPane.setBounds(550, 600, 300, 100);
-        lobbyPanel.add(playerListScrollPane, JLayeredPane.PALETTE_LAYER);
+        // Add the label to the lobby panel
+        lobbyPanel.add(playerListText, JLayeredPane.PALETTE_LAYER);
 
         // Ready button at the bottom
         readyButton = new JButton("READY");
+        readyButton.setFont(fontInkyThinPixelsBase);
+        readyButton.setForeground(Color.decode("#FFFFFF"));
+        readyButton.setBackground(Color.decode("#708495"));
         readyButton.addActionListener(_ -> toggleReadyState());
-        readyButton.setBounds(550, 700, 300, 50);
+        readyButton.setBounds(540, 740, 325, 54);
+        readyButton.setVerticalAlignment(SwingConstants.CENTER);
         lobbyPanel.add(readyButton, JLayeredPane.PALETTE_LAYER);
     }
 
@@ -295,14 +298,21 @@ public class GameGUI extends JFrame {
      */
     public void updateLobby(String message) {
         SwingUtilities.invokeLater(() -> {
-            playerListModel.clear();
+            // playerListModel.clear();
+            StringBuilder playerText = new StringBuilder("<html>"); // Start HTML formatting
             String[] players = message.split(";");
             for (String playerInfo : players) {
                 if (!playerInfo.isEmpty() && playerInfo.contains(",")) {
                     String[] parts = playerInfo.split(",");
-                    playerListModel.addElement(parts[0] + " - " + parts[1]);
+                    // playerListModel.addElement(parts[0] + " - " + parts[1]);
+                    playerText.append(parts[0]).append(" - ").append(parts[1]).append("<br>");
                 }
             }
+            playerText.append("</html>"); // Close the HTML tags
+
+            // Update the text of the player list label
+            playerListText.setText(playerText.toString());
+
             lobbyPanel.revalidate();
             lobbyPanel.repaint();
         });
@@ -422,9 +432,10 @@ public class GameGUI extends JFrame {
                 playersContainerLabel.setBounds(xPosition + 500, 512, 382, 355);
                 instructions.setBounds(xPosition + 100, 265, 870, 170);
                 controls.setBounds(xPosition + 137, 512, 253, 246);
-                countdownLabel.setBounds(xPosition + 530, 800, 370, 50);
-                playerListScrollPane.setBounds(xPosition + 550, 600, 300, 100);
-                readyButton.setBounds(xPosition + 550, 700, 300, 50);
+                countdownLabel.setBounds(xPosition + 540, 800, 370, 50);
+                playerListText.setBounds(xPosition + 540, 475, 305, 300);
+                readyButton.setBounds(xPosition + 540, 740, 325, 54);
+
             }
         });
 

@@ -185,7 +185,7 @@ public class ClientHandler implements Runnable, Observer {
         for (Player player : gameServer.getPlayers().values()) {
             lobbyState.append(player.getId())
                     .append(",")
-                    .append(player.getReady() ? "READY" : "NOT_READY")
+                    .append(player.getReady() ? "READY" : "NOT READY")
                     .append(";");
         }
         gameServer.broadcast(lobbyState.toString());

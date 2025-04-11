@@ -5,6 +5,8 @@ import main.java.model.Square;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
+import java.io.File;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -90,12 +92,82 @@ public class GameGUI extends JFrame {
         setTitle("Onigiri Wars");
         setSize(WINDOW_SIZE, WINDOW_SIZE);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setLayout(new GridLayout(GRID_SIZE, GRID_SIZE));
+        setLayout(null);
 
+        // Create layered pane
+        layeredPane = new JLayeredPane();
+        layeredPane.setBounds(0, 0, WINDOW_SIZE, WINDOW_SIZE);
+        setContentPane(layeredPane);
+
+        // Lobby Background Panel
+        backgroundPanel = new JPanel();
+        backgroundPanel.setBounds(0, 0, 2065, 1000);
+        backgroundPanel.setLayout(null);
+        lobbyBackground = new JLabel(new ImageIcon("../../resources/images/lobby_background.png"));
+        lobbyBackground.setBounds(0, 0, 2065, 1000);
+        backgroundPanel.add(lobbyBackground);
+        layeredPane.add(backgroundPanel, JLayeredPane.DEFAULT_LAYER);
+
+        // Logo Panel
+        logoLabel = new JLabel(new ImageIcon("../../resources/images/onigiri_wars_logo.png"));
+        logoLabel.setBounds(100, 345, 767, 146);
+        layeredPane.add(logoLabel, JLayeredPane.PALETTE_LAYER); 
+
+        // Press Any Key To Start Label
+        try {
+            // Load the Inky Thin Pixels font file from resources
+            fontInkyThinPixelsLarge = Font.createFont(Font.TRUETYPE_FONT, new File("../../resources/fonts/Inky Thin Pixels.ttf")).deriveFont(48f);
+            GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
+            ge.registerFont(fontInkyThinPixelsLarge);
+
+            // Create JLabel with custom font
+            startPromptText = new JLabel("> PRESS ANY KEY TO START");
+            startPromptText.setFont(fontInkyThinPixelsLarge);
+            startPromptText.setForeground(new Color(41,50,65));
+            startPromptText.setBounds(430, 530, 450, 55);
+
+            // Add the text label to the layered pane
+            layeredPane.add(startPromptText, JLayeredPane.PALETTE_LAYER);
+
+        } catch (FontFormatException | IOException e) {
+            e.printStackTrace();
+        }
+
+        // Timer for blinking effect
+        Timer timer = new Timer(600, new ActionListener() {
+            private boolean isVisible = true; // Track visibility state
+        
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                isVisible = !isVisible; // Toggle visibility
+                startPromptText.setVisible(isVisible);
+            }
+        });
+
+        timer.start();
+
+        // Setup Lobby Panel
         setupLobbyPanel();
-        getContentPane().add(lobbyPanel, BorderLayout.CENTER);
-        lobbyPanel.setVisible(true);
+        lobbyPanel.setBounds(0, 0, WINDOW_SIZE, WINDOW_SIZE);
+        lobbyPanel.setOpaque(false);
+        lobbyPanel.setVisible(false); // Initially hidden
+        layeredPane.add(lobbyPanel, JLayeredPane.PALETTE_LAYER); // Place above background
 
+        // Add KeyListener to detect any key press
+        addKeyListener(new KeyAdapter() {
+            @Override
+            public void keyPressed(KeyEvent e) {
+                lobbyPanel.setVisible(true); // Show lobby panel when any key is pressed
+                logoLabel.setVisible(false); // Hide logo when any key is pressed
+                timer.stop();
+                startPromptText.setVisible(false); // Hide "Press Any Key To Start" text when any key is pressed
+            }
+        });
+
+        // Ensure focus for key detection
+        setFocusable(true);
+        requestFocusInWindow();
+        
         setupKeyBindings();
         setFocusable(true);
         setVisible(true);

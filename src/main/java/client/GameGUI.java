@@ -14,8 +14,17 @@ import java.util.Map;
  * movement, and game state updates.
  */
 public class GameGUI extends JFrame {
-    private static final int WINDOW_SIZE = 400;
+    private static final int WINDOW_SIZE = 1000;
     private static final int GRID_SIZE = 10;
+
+    // Start Screen UI
+    private JPanel backgroundPanel;
+    private JLabel lobbyBackground;
+    private JLabel logoLabel;
+    private JLabel startPromptText;
+    private Font fontInkyThinPixelsLarge;
+    private Font fontInkyThinPixelsBase;
+    private JLayeredPane layeredPane;
 
     // Lobby UI components
     private JPanel lobbyPanel;

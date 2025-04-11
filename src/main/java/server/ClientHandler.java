@@ -221,6 +221,7 @@ public class ClientHandler implements Runnable, Observer {
             }
         }
         gameServer.broadcast("GAME_STARTED");
+        gameServer.startGameTimer();
     }
 
     /**

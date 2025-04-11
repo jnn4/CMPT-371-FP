@@ -189,7 +189,19 @@ public class GameClient {
             case "SERVER_FULL":
                 System.err.println("ERROR: Server is full. Please try again later.");
                 break;
-                
+
+            case "GAME_OVER":
+                if (parts.length >= 3) {
+                    String winnerID = parts[1];
+                    int winnerScore = Integer.parseInt(parts[2]);
+                    String allScores = parts[3];
+                    
+                    if (gui != null) {
+                        gui.showGameOver(winnerID, winnerScore, allScores);
+                    }
+                }
+                break;
+
             default:
                 System.err.println("Unknown command from server: " + command);
                 break;

@@ -493,6 +493,51 @@ public class GameGUI extends JFrame {
     }
 
     /**
+     * Displays a game over dialog with the winner's information and final scores.
+     *
+     * @param winnerId The ID of the winning player.
+     * @param winnerScore The score of the winning player.
+     * @param allScores A string containing all players' scores.
+     */
+    public void showGameOver(String winnerId, int winnerScore, String allScores) {
+        SwingUtilities.invokeLater(() -> {
+            try {
+                String scoreDisplay = "Game Over!\n\n";
+                scoreDisplay += "Winner: " + winnerId + " with " + winnerScore + " squares!\n\n";
+                
+                // format: "playerId:score;playerId:score;..."
+                scoreDisplay += "Scoreboard:\n";
+                if (allScores != null && !allScores.isEmpty()) {
+                    String[] playerScorePair = allScores.split(";");
+                    for (String playerScore : playerScorePair) {
+                        if (!playerScore.isEmpty()) {
+                            String[] parts = playerScore.split(":");
+                            if (parts.length == 2) {
+                                scoreDisplay += parts[0] + ": " + parts[1] + " squares\n";
+                            }
+                        }
+                    }
+                }
+                
+                JOptionPane.showMessageDialog(
+                    this,
+                    scoreDisplay,
+                    "Game Over",
+                    JOptionPane.INFORMATION_MESSAGE
+                );
+                
+                // Exit application when OK is clicked
+                System.exit(0);
+                
+            } catch (Exception e) {
+                System.err.println("Error showing dialog: " + e.getMessage());
+                e.printStackTrace();
+                System.exit(1);
+            }
+        });
+    }
+
+    /**
      * Sets the client instance to interact with the server.
      *
      * @param client The GameClient instance to set.

@@ -33,4 +33,5 @@ public interface GameServerInterface {
     int getNextPlayerId();
     Grid getGrid();
     Map<String, Player> getPlayers();   
+    void startGameTimer();
 }

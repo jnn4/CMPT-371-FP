@@ -19,7 +19,7 @@ public class GameGUI extends JFrame {
     private static final int WINDOW_SIZE = 1000;
     private static final int GRID_SIZE = 10;
 
-    // Start Screen UI
+    // Start Screen UI components
     private JPanel backgroundPanel;
     private JLabel lobbyBackground;
     private JLabel logoLabel;
@@ -29,10 +29,15 @@ public class GameGUI extends JFrame {
     private JLayeredPane layeredPane;
 
     // Lobby UI components
-    private JPanel lobbyPanel;
+    private JLayeredPane lobbyPanel;
+    private JLabel howToPlayLabel;
+    private JLabel instructions;
+    private JLabel controls;
+    private JLabel playersContainerLabel;
     private JLabel countdownLabel;
     private DefaultListModel<String> playerListModel;
     private JList<String> playerList;
+    private JScrollPane playerListScrollPane;
     private JButton readyButton;
 
     // Game UI components
@@ -178,7 +183,7 @@ public class GameGUI extends JFrame {
      * Initializes the lobby panel with player list and ready button.
      */
     private void setupLobbyPanel() {
-        lobbyPanel = new JPanel(new BorderLayout());
+        lobbyPanel = new JLayeredPane();
         lobbyPanel.setPreferredSize(new Dimension(WINDOW_SIZE, WINDOW_SIZE));
 
         // Countdown label

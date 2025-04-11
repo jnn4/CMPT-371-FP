@@ -8,6 +8,12 @@ import java.net.*;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
+// classes for running checks on game's status (timer run out/all squared owned)
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
+
 /**
  * Represents the game server that manages the game state and client interactions.
  *
@@ -24,10 +30,14 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class GameServer implements GameServerInterface {
     private static final int PORT = 12345;
     private static final Grid grid = new Grid(10);
+    private static final int GAME_DURATION_SECONDS = 30;
     private static final Set<ClientHandler> clients = new HashSet<>();
     private static final Map<String, Player> players = new HashMap<>();
     private static final AtomicInteger playerCounter = new AtomicInteger(1);
     private static final int MAX_PLAYERS = 4;
+
+    private static ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
+    private ScheduledFuture<?> task_checkAllSquaresClaimed = null;
 
     private List<Observer> observers = new ArrayList<>();
 
@@ -185,6 +195,11 @@ public class GameServer implements GameServerInterface {
      */
     @Override
     public synchronized void determineWinner() {
+        // Cancel the scheduled check if the game has ended
+        if (task_checkAllSquaresClaimed != null) {
+            task_checkAllSquaresClaimed.cancel(true);
+        }
+
         Map<Player, Integer> scoreMap = new HashMap<>();
 
         // Count squares owned by each player
@@ -197,20 +212,72 @@ public class GameServer implements GameServerInterface {
             }
         }
 
-        // Find player with the most squares
+        // Convert map to list for sorting (descending order)
+        List<Map.Entry<Player, Integer>> sortedScores = new ArrayList<>(scoreMap.entrySet());
+        sortedScores.sort((e1, e2) -> e2.getValue().compareTo(e1.getValue()));
+        
+        // Winner = first entry in sorted list
         Player winner = null;
         int maxScore = 0;
-        for (Map.Entry<Player, Integer> entry : scoreMap.entrySet()) {
-            if (entry.getValue() > maxScore) {
-                winner = entry.getKey();
-                maxScore = entry.getValue();
-            }
+
+        if (!sortedScores.isEmpty()) {
+            winner = sortedScores.get(0).getKey();
+            maxScore = sortedScores.get(0).getValue();
         }
 
+        String scoresData = "";
+        for (Map.Entry<Player, Integer> entry : sortedScores) {
+            Player player = entry.getKey();
+            int score = entry.getValue();
+            scoresData += player.getId() + ":" + score + ";";
+        }
+    
         if (winner != null) {
             String message = "Winner: " + winner.getId() + " with " + maxScore + " squares!";
             System.out.println(message);
-            broadcast("GAME_OVER," + winner.getId() + "," + maxScore);
+            broadcast("GAME_OVER," + winner.getId() + "," + maxScore + "," + scoresData);
+        }
+    }
+
+    /**
+     * Starts the game timer that counts down from GAME_DURATION_SECONDS.
+     * When the timer expires, determineWinner() is called to end the game.
+     */
+    @Override
+    public synchronized void startGameTimer() {
+        scheduler.schedule(() -> {
+            System.out.println("Game time expired! Determining winner...");
+            determineWinner();
+        }, GAME_DURATION_SECONDS, TimeUnit.SECONDS);
+
+        // Schedule a task to periodically check if all squares are claimed
+        task_checkAllSquaresClaimed = scheduler.scheduleAtFixedRate(() -> {
+            checkAllSquaresClaimed();
+        }, 5, 1, TimeUnit.SECONDS);
+    }
+
+    /**
+     * Checks if all squares on the grid have been claimed by players.
+     * This method iterates through the grid and checks if all squares have an owner.
+     *
+     * If all squares are claimed, it calls determineWinner() to end the game early.
+     */
+    @Override
+    public void checkAllSquaresClaimed() {
+        boolean allClaimed = true;
+        for (int i = 0; i < grid.getSize(); i++) {
+            for (int j = 0; j < grid.getSize(); j++) {
+                Square square = grid.getSquare(i, j);
+                if (!square.isWall() && square.getOwner() == null) {
+                    allClaimed = false;
+                    break;
+                }
+            }
+        }
+
+        if (allClaimed) {
+            System.out.println("All squares claimed! Determining winner...");
+            determineWinner();
         }
     }
 

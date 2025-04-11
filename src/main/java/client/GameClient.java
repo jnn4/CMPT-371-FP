@@ -18,7 +18,6 @@ public class GameClient {
     // GUI reference and player state
     private GameGUI gui;
     private String playerId;
-    private volatile boolean guiReady = false;
 
     /**
      * Sets the GUI reference and marks it as ready for updates.
@@ -26,7 +25,6 @@ public class GameClient {
      */
     public void setGUI(GameGUI gui) {
         this.gui = gui;
-        this.guiReady = true;
         System.out.println("GUI reference set");
     }
 
@@ -57,7 +55,6 @@ public class GameClient {
     public GameClient(String serverAddress, int port, GameGUI gui) {
         this.gui = gui;
         if (this.gui != null) {
-            this.guiReady = true;
         }
 
         try {
@@ -95,7 +92,7 @@ public class GameClient {
      * @param newY The target Y coordinate
      */
     public void sendMove(int newX, int newY) {
-        out.println("MOVE " + newX + " " + newY);
+        out.println("MOVE," + newX + "," + newY);
     }
 
     /**
@@ -181,6 +178,30 @@ public class GameClient {
                 }
                 break;
 
+            case "INVALID_MOVE":
+                System.out.println("Invalid move detected");
+                break;
+    
+            case "UNKNOWN_COMMAND":
+                System.err.println("Server rejected last command");
+                break;
+            
+            case "SERVER_FULL":
+                System.err.println("ERROR: Server is full. Please try again later.");
+                break;
+
+            case "GAME_OVER":
+                if (parts.length >= 3) {
+                    String winnerID = parts[1];
+                    int winnerScore = Integer.parseInt(parts[2]);
+                    String allScores = parts[3];
+                    
+                    if (gui != null) {
+                        gui.showGameOver(winnerID, winnerScore, allScores);
+                    }
+                }
+                break;
+
             default:
                 System.err.println("Unknown command from server: " + command);
                 break;
@@ -196,12 +217,12 @@ public class GameClient {
         int x = Integer.parseInt(parts[2]);
         int y = Integer.parseInt(parts[3]);
         String color = parts[4];
-        System.out.println("Assigned player ID: " + playerId);
+        // System.out.println("Assigned player ID: " + playerId);
 
         SwingUtilities.invokeLater(() -> {
             if (gui != null) {
                 gui.setLocalPlayer(playerId, x, y, color);
-                System.out.println("Local player initialized at " + x + "," + y);
+                // System.out.println("Local player initialized at " + x + "," + y);
             }
         });
     }
@@ -227,7 +248,7 @@ public class GameClient {
      * @param parts The parsed message parts
      */
     private void handlePlayerJoined(String message, String[] parts) {
-        System.out.println("[CLIENT] Received PLAYER_JOINED: " + message);
+        // System.out.println("[CLIENT] Received PLAYER_JOINED: " + message);
         // Skip our own join message
         if (!parts[1].equals(playerId)) {
             String finalMessage = message;

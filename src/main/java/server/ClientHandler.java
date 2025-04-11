@@ -130,10 +130,10 @@ public class ClientHandler implements Runnable, Observer {
      */
     private String getCornerColor(String playerId) {
         return switch (playerId) {
-            case "P1" -> "#FF0000";
-            case "P2" -> "#00FF00";
-            case "P3" -> "#0000FF";
-            case "P4" -> "#FFFF00";
+            case "P1" -> "#f0adc6";
+            case "P2" -> "#a7c1e9";
+            case "P3" -> "#feeaa7";
+            case "P4" -> "#b3f4bb";
             default -> throw new IllegalStateException("Unexpected player ID: " + playerId);
         };
     }
@@ -144,20 +144,17 @@ public class ClientHandler implements Runnable, Observer {
      * @param message The message received from the client.
      */
     private void handleClientMessage(String message) {
-        String[] parts = message.split(" ");
+        String[] parts = message.split(",");
         switch (parts[0]) {
             case "MOVE":
                 int newX = Integer.parseInt(parts[1]);
                 int newY = Integer.parseInt(parts[2]);
                 if (gameServer.movePlayer(player.getId(), newX, newY)) {
                     gameServer.broadcast("PLAYER_MOVED," + player.getId() + "," + newX + "," + newY + "," + player.getColor());
+                    sendMessage("MOVE_CONFIRMED," + player.getId() + "," + newX + "," + newY);
                 } else {
-                    sendMessage("INVALID MOVE");
+                    sendMessage("INVALID_MOVE");
                 }
-                break;
-
-            case "INIT_STATE":
-                broadcastLobbyState();
                 break;
 
             case "READY":
@@ -170,9 +167,13 @@ public class ClientHandler implements Runnable, Observer {
                 player.toggleReady();
                 broadcastLobbyState();
                 break;
+            
+            case "INIT_STATE":
+                broadcastAllPlayerPositions();
+                break;
 
             default:
-                sendMessage("UNKNOWN COMMAND");
+                sendMessage("UNKNOWN_COMMAND");
         }
     }
 
@@ -184,7 +185,7 @@ public class ClientHandler implements Runnable, Observer {
         for (Player player : gameServer.getPlayers().values()) {
             lobbyState.append(player.getId())
                     .append(",")
-                    .append(player.getReady() ? "READY" : "NOT_READY")
+                    .append(player.getReady() ? "READY" : "NOT READY")
                     .append(";");
         }
         gameServer.broadcast(lobbyState.toString());
@@ -200,6 +201,15 @@ public class ClientHandler implements Runnable, Observer {
             if (!player.getReady()) return false;
         }
         return true;
+    }
+
+    /**
+     * Broadcasts the positions of all players to all clients.
+     */
+    private void broadcastAllPlayerPositions() {
+        for (Player p : gameServer.getPlayers().values()) {
+            gameServer.broadcast("PLAYER_MOVED," + p.getId() + "," + p.getX() + "," + p.getY() + "," + p.getColor());
+        }
     }
 
     /**
@@ -220,6 +230,8 @@ public class ClientHandler implements Runnable, Observer {
             }
         }
         gameServer.broadcast("GAME_STARTED");
+        broadcastAllPlayerPositions();
+        gameServer.startGameTimer();
     }
 
     /**

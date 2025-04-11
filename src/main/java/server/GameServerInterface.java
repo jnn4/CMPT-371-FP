@@ -14,20 +14,25 @@ import java.util.Map;
  * support for push-based notifications.
  */
 public interface GameServerInterface {
-    void broadcast(String message);
-    void addPlayer(Player player);
-    void removePlayer(String playerId);
-    boolean movePlayer(String playerId, int newX, int newY);
-    void determineWinner();
-    int getPlayerCount();
-    int getMaxPlayers();
-    int getNextPlayerId();
-    Grid getGrid();
-    Map<String, Player> getPlayers();
-    void removeClient(ClientHandler client);
-
     // Observer methods
     void addObserver(Observer observer);
     void removeObserver(Observer observer);
     void notifyObservers(String message);
+    
+    // Player Management and Communication
+    void broadcast(String message);
+    void addPlayer(Player player);
+    void removePlayer(String playerId);
+    boolean movePlayer(String playerId, int newX, int newY);
+    void removeClient(ClientHandler client);
+    void determineWinner();
+
+    // Game State
+    int getPlayerCount();
+    int getMaxPlayers();
+    int getNextPlayerId();
+    Grid getGrid();
+    Map<String, Player> getPlayers();   
+    void startGameTimer();
+    void checkAllSquaresClaimed();
 }

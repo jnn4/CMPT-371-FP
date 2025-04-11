@@ -33,7 +33,7 @@ public class Player {
         this.x = x;
         this.y = y;
         this.color = Objects.requireNonNull(color, "Color cannot be null");
-        System.out.println("Created Player: " + id + " at (" + x + "," + y + ")");
+        System.out.println("Added Player: " + id + " at (" + x + "," + y + ")");
     }
 
     // Getters & Setters

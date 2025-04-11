@@ -11,6 +11,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 // classes for running checks on game's status (timer run out/all squared owned)
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -29,13 +30,14 @@ import java.util.concurrent.TimeUnit;
 public class GameServer implements GameServerInterface {
     private static final int PORT = 12345;
     private static final Grid grid = new Grid(10);
-    private static final int GAME_DURATION_SECONDS = 10;
+    private static final int GAME_DURATION_SECONDS = 60;
     private static final Set<ClientHandler> clients = new HashSet<>();
     private static final Map<String, Player> players = new HashMap<>();
     private static final AtomicInteger playerCounter = new AtomicInteger(1);
     private static final int MAX_PLAYERS = 4;
 
     private static ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
+    private ScheduledFuture<?> task_checkAllSquaresClaimed = null;
 
     private List<Observer> observers = new ArrayList<>();
 
@@ -193,6 +195,11 @@ public class GameServer implements GameServerInterface {
      */
     @Override
     public synchronized void determineWinner() {
+        // Cancel the scheduled check if the game has ended
+        if (task_checkAllSquaresClaimed != null) {
+            task_checkAllSquaresClaimed.cancel(true);
+        }
+
         Map<Player, Integer> scoreMap = new HashMap<>();
 
         // Count squares owned by each player
@@ -242,6 +249,35 @@ public class GameServer implements GameServerInterface {
             System.out.println("Game time expired! Determining winner...");
             determineWinner();
         }, GAME_DURATION_SECONDS, TimeUnit.SECONDS);
+
+        // Schedule a task to periodically check if all squares are claimed
+        task_checkAllSquaresClaimed = scheduler.scheduleAtFixedRate(() -> {
+            checkAllSquaresClaimed();
+        }, 5, 1, TimeUnit.SECONDS);
+    }
+
+    /**
+     * Checks if all squares on the grid have been claimed by players.
+     * This method iterates through the grid and checks if all squares have an owner.
+     *
+     * If all squares are claimed, it calls determineWinner() to end the game early.
+     */
+    @Override
+    public void checkAllSquaresClaimed() {
+        boolean allClaimed = true;
+        for (int i = 0; i < grid.getSize(); i++) {
+            for (int j = 0; j < grid.getSize(); j++) {
+                if (grid.getSquare(i, j).getOwner() == null) {
+                    allClaimed = false;
+                    break;
+                }
+            }
+        }
+
+        if (allClaimed) {
+            System.out.println("All squares claimed! Determining winner...");
+            determineWinner();
+        }
     }
 
     /**

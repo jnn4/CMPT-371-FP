@@ -34,4 +34,5 @@ public interface GameServerInterface {
     Grid getGrid();
     Map<String, Player> getPlayers();   
     void startGameTimer();
+    void checkAllSquaresClaimed();
 }

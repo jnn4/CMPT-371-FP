@@ -179,7 +179,7 @@ public class GameClient {
                 break;
 
             case "INVALID_MOVE":
-                System.out.println("Invalid move detected");
+                System.err.println("Invalid move detected");
                 break;
     
             case "UNKNOWN_COMMAND":
@@ -217,12 +217,10 @@ public class GameClient {
         int x = Integer.parseInt(parts[2]);
         int y = Integer.parseInt(parts[3]);
         String color = parts[4];
-        // System.out.println("Assigned player ID: " + playerId);
 
         SwingUtilities.invokeLater(() -> {
             if (gui != null) {
                 gui.setLocalPlayer(playerId, x, y, color);
-                // System.out.println("Local player initialized at " + x + "," + y);
             }
         });
     }
@@ -248,7 +246,6 @@ public class GameClient {
      * @param parts The parsed message parts
      */
     private void handlePlayerJoined(String message, String[] parts) {
-        // System.out.println("[CLIENT] Received PLAYER_JOINED: " + message);
         // Skip our own join message
         if (!parts[1].equals(playerId)) {
             String finalMessage = message;

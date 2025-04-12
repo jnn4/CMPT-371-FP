@@ -29,8 +29,6 @@ public class Square {
     }
 
     public boolean isWall() { return isWall; }
-    // private int getX() { return label.getX(); }
-    // private int getY() { return label.getY(); }
     public Player getOwner() { return owner; }
 
     /**
@@ -91,16 +89,11 @@ public class Square {
             if (lock.tryLock(LOCK_TIMEOUT_MS, TimeUnit.MILLISECONDS)) {
                 owner = player;
                 updateLabelForLock(player);
-                // System.out.printf("Square at [%d,%d] locked by %s%n",
-                        // X(), getY(), player.getId());
                 return true;
             }
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
         }
-
-        // System.out.printf("Failed to lock square at [%d,%d] (locked by %s)%n",
-                // getX(), getY(), (owner != null ? owner.getId() : "unknown"));
         return false;
     }
 
@@ -110,11 +103,8 @@ public class Square {
      */
     public synchronized void releaseLock() {
         if (lock.isHeldByCurrentThread()) {
-            // Player lastOwner = owner;
             owner = null;
             lock.unlock();
-            // System.out.printf("Square at [%d,%d] unlocked (was held by %s)%n",
-                    // getX(), getY(), (lastOwner != null ? lastOwner.getId() : "unknown"));
         } else if (lock.isLocked()) {
             System.err.printf("Thread %s attempted to release lock held by %s%n",
                     Thread.currentThread().getName(),

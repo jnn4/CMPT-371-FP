@@ -1,7 +1,6 @@
 # CMPT 371 Final Project - Onigiri Wars🍙 
 
 ### *A Multiplayer Land-Claiming Strategy Game*  
-
 ---
 
 ## **Overview**  
@@ -9,7 +8,10 @@
 
 ---
 
+## **Video Demo**
+YouTube Link: https://www.youtube.com/watch?v=evRVT6tB6cI
 
+---
 ## **How to Play** 🎮
 1. **Start the server** – Any player can host the game.  
 2. **Join as a client** – Other players connect remotely.  

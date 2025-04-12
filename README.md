@@ -1,4 +1,4 @@
-# **CMPT 371 Final Project - Onigiri Wars**  
+# CMPT 371 Final Project - Onigiri Wars🍙 
 
 ### *A Multiplayer Land-Claiming Strategy Game*  
 
@@ -17,6 +17,31 @@
 4. **Claimed tiles act as walls**, blocking other players.  
 5. **Use strategy to cut off opponents** and expand your territory.  
 6. **Game ends when the timer runs out** – the player with the most claimed tiles **wins**! 🥳
+
+---
+
+## Interface Screenshots
+### ⭐ Landing Screen
+Players will land at this screen upon joining the game. To join the lobby, click any key on the keyboard.
+
+![image](https://github.com/user-attachments/assets/db89f398-b8b0-410c-98c0-923bf9a0bfb2)
+---
+### 📜 Lobby with Game Instructions
+The lobby contains instructions on how to play the game, keyboard controls, and a list of players in the lobby. 
+\
+To ready up, click the "READY" button. The game will start once all palyers are ready.
+
+![image](https://github.com/user-attachments/assets/bbe36417-2b6c-478a-839d-ca1adaf42ef1)
+---
+### 🎮 Game Screen
+The game board consists of a 10x10 grid. Claim the most tiles to win! 
+
+![image](https://github.com/user-attachments/assets/257f804e-76ec-4b34-b38d-608fce3cd9fa)
+---
+### 💢 Game Over Screen
+When the game ends, a recap popup will display the winning player and a scoreboard.
+
+![image](https://github.com/user-attachments/assets/73efb3c2-2bcb-4a93-a98e-712b8a781e4f)
 
 ---
 

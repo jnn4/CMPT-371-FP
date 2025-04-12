@@ -1,8 +1,7 @@
 /out
-src/main/server/GameServer.class
-src/main/server/PlayerHandler.class
+*.class
 src/main/bridge/package-lock.json
 src/main/bridge/package.json
 src/main/.DS_Store
 src/main/bridge/node_modules
-.idea/libraries/json_20240205.xml
+.idea/

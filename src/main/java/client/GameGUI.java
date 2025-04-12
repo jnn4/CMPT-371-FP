@@ -36,9 +36,6 @@ public class GameGUI extends JFrame {
     private JLabel playersContainerLabel;
     private JLabel playerListText;
     private JLabel countdownLabel;
-    private DefaultListModel<String> playerListModel;
-    private JList<String> playerList;
-    private JScrollPane playerListScrollPane;
     private JButton readyButton;
 
     // Game UI components
@@ -82,7 +79,6 @@ public class GameGUI extends JFrame {
      */
     public void setLocalPlayer(String id, int x, int y, String color) {
         synchronized(playerLock) {
-            // System.out.println("Setting local player: " + id);
             try {
                 this.localPlayer = new Player(id, x, y, color);
                 players.put(id, this.localPlayer);
@@ -91,7 +87,6 @@ public class GameGUI extends JFrame {
                 playerSprites.put("P2", new ImageIcon("../../resources/images/sprites/p2.png"));
                 playerSprites.put("P3", new ImageIcon("../../resources/images/sprites/p3.png"));
                 playerSprites.put("P4", new ImageIcon("../../resources/images/sprites/p4.png"));
-                // System.out.println("Local player set successfully: " + localPlayer);
             } catch (Exception e) {
                 System.err.println("Error setting local player: ");
                 e.printStackTrace();
@@ -345,7 +340,6 @@ public class GameGUI extends JFrame {
      * Initializes and displays the game board.
      */
     public void startGame() {
-        System.out.println("Attempting to start game...");
         if (localPlayer == null) {
             System.err.println("CRITICAL: Game start attempted with null localPlayer");
             System.err.println("Current players: " + players.keySet());
@@ -367,8 +361,6 @@ public class GameGUI extends JFrame {
     
         }
 
-        // getContentPane().removeAll();
-        // setLayout(new GridLayout(GRID_SIZE, GRID_SIZE));
         JPanel gridPanel = new JPanel(new GridLayout(GRID_SIZE, GRID_SIZE));
         gridPanel.setPreferredSize(new Dimension(800, 800));
 
@@ -627,7 +619,6 @@ public class GameGUI extends JFrame {
     public void addPlayer(String message) {
         SwingUtilities.invokeLater(() -> {
             try {
-                // System.out.println("Adding player: " + message);
                 String[] playerData = message.split(",");
                 if (playerData.length != 4) {
                     System.err.println("Invalid player data: " + message);
@@ -637,7 +628,6 @@ public class GameGUI extends JFrame {
                 String playerId = playerData[0];
                 // Skip if this is our local player
                 if (localPlayer != null && localPlayer.getId().equals(playerId)) {
-                    System.out.println("Skipping local player in addPlayer");
                     return;
                 }
 
@@ -702,7 +692,6 @@ public class GameGUI extends JFrame {
             int oldY = player.getY();
 
             if (!gridSquares[newY][newX].tryLock(player)) {
-                System.out.println("Move blocked: Target square is locked.");
                 return;
             }
 
@@ -731,8 +720,6 @@ public class GameGUI extends JFrame {
                 gameOverPanel = new JLabel(new ImageIcon("../../resources/images/game_over.png"));
                 gameOverPanel.setBounds(130, 45, 730,830);
                 layeredPane.add(gameOverPanel, JLayeredPane.POPUP_LAYER);
-
-                String scoreDisplay = "";
                 
                 JLabel winnerText = null;
                 switch(winnerId){
